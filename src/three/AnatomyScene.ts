@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js'
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { BONE_BY_ID } from '../data/bones'
 import { JOINT_BY_ID } from '../data/joints'
 import { MUSCLE_BY_ID } from '../data/muscles'
@@ -10,6 +11,7 @@ import type { Exercise, ExerciseView, LayerName, MuscleRole } from '../data/type
 import { JointGizmo } from './JointGizmo'
 import {
   createAnatomyMaterial,
+  createConnectiveMaterial,
   disposeMaterial,
   setActiveBone,
   setActiveJoint,
@@ -81,6 +83,8 @@ export class AnatomyScene {
   }
   private readonly meshEntries: MeshEntry[] = []
   private readonly pickables: THREE.Mesh[] = []
+  private readonly softMeshes: THREE.Mesh[] = []
+  private softMaterial: THREE.MeshPhysicalMaterial | null = null
   private readonly gizmos: JointGizmo[] = []
   private readonly raycaster = new THREE.Raycaster()
   private readonly pointer = new THREE.Vector2()
@@ -109,7 +113,7 @@ export class AnatomyScene {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this.renderer.setClearColor(0x0a0d12, 1)
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping
-    this.renderer.toneMappingExposure = 1.05
+    this.renderer.toneMappingExposure = 1.0
     this.renderer.domElement.className = 'anatomy-canvas'
     container.appendChild(this.renderer.domElement)
 
@@ -149,24 +153,33 @@ export class AnatomyScene {
     this.scene.background = new THREE.Color(0x0a0d12)
     this.scene.fog = new THREE.Fog(0x0a0d12, 5.5, 11)
 
-    const hemisphere = new THREE.HemisphereLight(0xa9c6e8, 0x1a1310, 0.9)
+    const pmrem = new THREE.PMREMGenerator(this.renderer)
+    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
+    this.scene.environmentIntensity = 0.35
+    pmrem.dispose()
+
+    const hemisphere = new THREE.HemisphereLight(0xb8cbe0, 0x2a1e18, 0.6)
     this.scene.add(hemisphere)
 
-    const key = new THREE.DirectionalLight(0xffe9d2, 2.6)
+    const key = new THREE.DirectionalLight(0xffe7cc, 2.0)
     key.position.set(2.6, 3.6, 3.2)
     this.scene.add(key)
 
-    const rim = new THREE.DirectionalLight(0x4de3f0, 1.1)
+    const rim = new THREE.DirectionalLight(0x49d6e5, 0.7)
     rim.position.set(-2.8, 1.6, -2.4)
     this.scene.add(rim)
 
-    const fill = new THREE.DirectionalLight(0x8fb4ff, 0.5)
+    const fill = new THREE.DirectionalLight(0x9db8ff, 0.3)
     fill.position.set(0, 0.6, -3)
     this.scene.add(fill)
 
+    const bounce = new THREE.DirectionalLight(0x8e352b, 0.55)
+    bounce.position.set(0, 0.35, 2.4)
+    this.scene.add(bounce)
+
     const ground = new THREE.Mesh(
       new THREE.CircleGeometry(2.2, 72),
-      new THREE.MeshStandardMaterial({ color: 0x0e131a, roughness: 1, metalness: 0 }),
+      new THREE.MeshStandardMaterial({ color: 0x10141a, roughness: 1, metalness: 0 }),
     )
     ground.rotation.x = -Math.PI / 2
     ground.position.y = -0.002
@@ -197,19 +210,22 @@ export class AnatomyScene {
     const loader = new GLTFLoader()
     loader.setDRACOLoader(draco)
 
-    const layers: LayerName[] = ['muscles', 'bones', 'joints']
+    const files = ['muscles', 'bones', 'joints', 'soft-tissue'] as const
     let loadedCount = 0
 
     try {
       const results = await Promise.all(
-        layers.map(async (layer) => {
-          const gltf = await loader.loadAsync(`${baseUrl}/${layer}.glb`)
+        files.map(async (file) => {
+          const gltf = await loader.loadAsync(`${baseUrl}/${file}.glb`)
           loadedCount += 1
-          this.callbacks.onProgress?.(0.05 + (loadedCount / layers.length) * 0.95)
-          return { layer, scene: gltf.scene }
+          this.callbacks.onProgress?.(0.05 + (loadedCount / files.length) * 0.95)
+          return { file, scene: gltf.scene }
         }),
       )
-      for (const { layer, scene } of results) this.addLayer(layer, scene)
+      for (const { file, scene } of results) {
+        if (file === 'soft-tissue') this.addSoftTissue(scene)
+        else this.addLayer(file, scene)
+      }
       this.hasLoaded = true
       this.callbacks.onProgress?.(1)
       this.callbacks.onReady?.()
@@ -255,6 +271,22 @@ export class AnatomyScene {
     this.layerRoots[layer].visible = this.layers[layer]
   }
 
+  private addSoftTissue(gltfScene: THREE.Group) {
+    const material = createConnectiveMaterial()
+    this.softMaterial = material
+    const meshes: THREE.Mesh[] = []
+    gltfScene.traverse((object) => {
+      if ((object as THREE.Mesh).isMesh) meshes.push(object as THREE.Mesh)
+    })
+    for (const mesh of meshes) {
+      mesh.material = material
+      mesh.frustumCulled = false
+      mesh.userData = { layer: 'muscles', groupId: 'soft-tissue', nameZh: '腱膜 / 筋膜' }
+      this.softMeshes.push(mesh)
+    }
+    this.layerRoots.muscles.add(gltfScene)
+  }
+
   setExercise(exercise: Exercise | null) {
     this.exercise = exercise
     this.clearGizmos()
@@ -280,6 +312,7 @@ export class AnatomyScene {
         setBase(entry.state, entry.layer, reveal)
         entry.mesh.visible = true
       }
+      for (const mesh of this.softMeshes) mesh.visible = !this.isolate
       return
     }
 
@@ -305,6 +338,7 @@ export class AnatomyScene {
       }
       entry.mesh.visible = !this.isolate || active
     }
+    for (const mesh of this.softMeshes) mesh.visible = !this.isolate
   }
 
   setLayers(layers: Record<LayerName, boolean>) {
@@ -371,7 +405,7 @@ export class AnatomyScene {
     const candidates = this.pickables.filter(
       (mesh) =>
         this.isMeshVisible(mesh) &&
-        (mesh.material as THREE.MeshStandardMaterial).opacity > 0.25,
+        (mesh.material as THREE.MeshStandardMaterial).opacity > 0.7,
     )
     const hits = this.raycaster.intersectObjects(candidates, false)
     const hit = hits[0]?.object as THREE.Mesh | undefined
@@ -483,6 +517,8 @@ export class AnatomyScene {
       entry.mesh.geometry.dispose()
       disposeMaterial(entry.state)
     }
+    for (const mesh of this.softMeshes) mesh.geometry.dispose()
+    this.softMaterial?.dispose()
     this.controls.dispose()
     this.renderer.dispose()
     this.renderer.domElement.remove()

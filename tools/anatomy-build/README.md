@@ -30,9 +30,10 @@ curl -L -o Joints100.fbx "$BASE/Joints100.fbx"
 
 产物写入 `public/models/`：
 
-- `muscles.glb`（41 个肌群节点，约 200k 三角面）
-- `bones.glb`（20 个骨骼节点，约 135k 三角面）
-- `joints.glb`（11 个关节/韧带节点，约 79k 三角面；肩胛胸壁为伪关节，无网格，仅前端 gizmo）
+- `muscles.glb`（41 个肌群节点，约 300k 三角面）
+- `bones.glb`（20 个骨骼节点，约 150k 三角面）
+- `joints.glb`（11 个关节/韧带节点，约 80k 三角面；肩胛胸壁为伪关节，无网格，仅前端 gizmo）
+- `soft-tissue.glb`（肌腱与支持带单节点 `soft__tissue`，约 23k 三角面）
 - `manifest.json`（节点、三角面、包围盒）
 - `LICENSE.txt`
 
@@ -41,6 +42,7 @@ curl -L -o Joints100.fbx "$BASE/Joints100.fbx"
 `groups.json` 用正则把 FBX 网格映射到肌群/骨骼/关节节点：
 
 - 肌肉排除筋膜、滑囊、腱鞘等；未匹配网格并入 `other-muscles`
+- 软组织仅保留肌腱与支持带，排除全身浅筋膜（否则会盖住肌肉）、滑囊与腱鞘
 - 骨骼按完整骨、肋骨、椎骨、颅骨、手足骨分组；≤20 面占位网格丢弃
 - 关节按关节囊与韧带关键词分组；左右合并
 - 同组内包围盒 IoU > 0.9 的重复网格去重

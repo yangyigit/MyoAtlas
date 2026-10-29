@@ -31,12 +31,13 @@ SOURCES = {
     "joints": ("Joints100.fbx", FBX_BASE + "Joints100.fbx"),
 }
 PREFIX = {"muscles": "muscle", "bones": "bone", "joints": "joint"}
-TARGET_TRIS = {"muscles": 200_000, "bones": 120_000, "joints": 50_000}
+TARGET_TRIS = {"muscles": 300_000, "bones": 150_000, "joints": 80_000, "connective": 90_000}
 
 MAT_COLORS = {
     "muscles": (0.42, 0.18, 0.15, 1.0),
     "bones": (0.82, 0.76, 0.66, 1.0),
     "joints": (0.18, 0.4, 0.44, 1.0),
+    "connective": (0.86, 0.8, 0.7, 1.0),
 }
 
 
@@ -104,6 +105,8 @@ def normalize_all(objs):
 def compile_rules(groups_cfg):
     compiled = {}
     for layer, cfg in groups_cfg.items():
+        if "groups" not in cfg:
+            continue
         compiled[layer] = [
             (g["id"], [re.compile(p, re.IGNORECASE) for p in g["patterns"]])
             for g in cfg["groups"]
@@ -247,6 +250,17 @@ def main():
     with open(GROUPS_PATH, encoding="utf-8") as fh:
         groups_cfg = json.load(fh)
     rules = compile_rules(groups_cfg)
+    connective_cfg = groups_cfg.get("connective")
+    conn_patterns = (
+        [re.compile(p, re.IGNORECASE) for p in connective_cfg["patterns"]]
+        if connective_cfg
+        else []
+    )
+    conn_exclude = (
+        re.compile(connective_cfg.get("exclude", r"$^"), re.IGNORECASE)
+        if connective_cfg
+        else None
+    )
     paths = ensure_sources()
 
     reset_scene()
@@ -277,8 +291,23 @@ def main():
         buckets = {}
         skipped = 0
         excluded = 0
+        soft_candidates = []
+        if layer == "muscles" and connective_cfg:
+            conn_min = connective_cfg.get("minPolys", 0)
+            for obj in objs:
+                name = obj.name
+                if len(obj.data.polygons) < conn_min:
+                    continue
+                if conn_exclude and conn_exclude.search(name):
+                    continue
+                if any(pattern.search(name) for pattern in conn_patterns):
+                    soft_candidates.append(obj)
+        soft_names = {obj.name for obj in soft_candidates}
+
         for obj in objs:
             name = obj.name
+            if name in soft_names:
+                continue
             if exclude and exclude.search(name):
                 excluded += 1
                 continue
@@ -319,6 +348,15 @@ def main():
             log("  ", node_name, "meshes", len(candidates), "->", len(kept), "tris", tris_of(obj))
 
         export_layer(layer, exported, manifest)
+
+        if layer == "muscles" and soft_candidates:
+            total = sum(len(obj.data.polygons) for obj in soft_candidates)
+            ratio = max(0.03, min(1.0, TARGET_TRIS["connective"] / max(total, 1)))
+            log("  soft tissue", "meshes", len(soft_candidates), "polys", total, "ratio", round(ratio, 4))
+            soft = join_group(
+                dedupe(soft_candidates), "soft__tissue", make_material("connective"), ratio
+            )
+            export_layer("soft-tissue", [soft], manifest)
 
     manifest_path = os.path.join(OUT_DIR, "manifest.json")
     with open(manifest_path, "w", encoding="utf-8") as fh:

@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { PALETTE } from '../three/materials'
+
 const items = [
-  { label: '主责', color: '#ff5a4e' },
-  { label: '协同', color: '#ff9f43' },
-  { label: '稳定', color: '#ffd166' },
-  { label: '关节', color: '#38d9e8' },
-  { label: '骨骼', color: '#d9cbb3' },
+  { label: '主责', color: PALETTE.primary },
+  { label: '协同', color: PALETTE.secondary },
+  { label: '稳定', color: PALETTE.stabilizer },
+  { label: '关节', color: PALETTE.jointActive },
+  { label: '骨骼', color: PALETTE.boneActive },
 ]
 </script>
 

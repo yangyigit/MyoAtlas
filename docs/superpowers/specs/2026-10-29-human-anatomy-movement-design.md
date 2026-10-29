@@ -80,7 +80,7 @@ src/
   App.vue
   main.ts
 public/
-  models/               muscles.glb / bones.glb / joints.glb / manifest.json / LICENSE.txt
+  models/               muscles.glb / bones.glb / joints.glb / soft-tissue.glb / manifest.json / LICENSE.txt
   draco/                Draco 解码器
 tools/
   anatomy-build/
@@ -100,7 +100,7 @@ docs/
 
 ### 数据流
 
-1. 启动：`AnatomyScene.load()` 加载三个 GLB，LoadingManager 进度写入 store。
+1. 启动：`AnatomyScene.load()` 加载四个 GLB（肌肉 / 骨骼 / 关节 / 肌腱），LoadingManager 进度写入 store。
 2. 选择动作：store 记录 `selectedExerciseId` → 视口调用 `applyExercise()`（材质高亮 + 关节 gizmo + 骨骼高亮）→ 若「自动特写」开启则 `focus(view)`。
 3. 图层/隔离/特写开关：store 状态 → `setLayers()` / `focus()` / `resetView()`。
 4. 悬停：引擎射线拾取 → 节点 `userData.groupId` → 回查中文名 → 通过事件更新 HTML tooltip。
@@ -329,31 +329,32 @@ ID 均为 kebab-case 英文。动作与结构数据中所有引用必须能解�
 ### 场景
 
 - `WebGLRenderer`（antialias、ACESFilmicToneMapping、DPR 上限 2），深色背景 `#0A0D12`，轻微雾化。
-- 三点光照（主光 + 补光 + 轮廓光）+ 地面接触阴影（简化网格）。
-- 默认视角：全身 3/4，camera `[0.9, 1.2, 3.0]`，target `[0, 0.95, 0]`，fov 35。
+- 环境 IBL（RoomEnvironment + PMREM，强度 0.35）+ 主光 / 轮廓光 / 补光 / 暖色反弹光；地面为简化暗色圆盘。
+- 肌肉使用 `MeshPhysicalMaterial`：粗糙度 0.54、clearcoat 0.28、sheen 0.35，并通过注入式着色器加入世界坐标噪声与纤维纹理；骨与关节使用 `MeshStandardMaterial`。
+- 默认视角：全身 3/4，camera `[1.15, 1.05, 2.75]`，target `[0, 0.92, 0]`，fov 35。
 - `OrbitControls`：阻尼 0.08，限制俯仰 10°–170°，距离 0.6–4.5；禁用平移以保持构图。
 
 ### 高亮状态
 
 | 状态 | 肌肉 | 骨骼 | 关节 |
 |---|---|---|---|
-| 基础 | 暗赭红 `#7A3F36` | 象牙 `#D9CBB3` | 灰青 `#3A6B72` |
-| 主责 | 红 `#FF5A4E` + 自发光 | — | — |
-| 协同 | 橙 `#FF9F43` + 自发光 | — | — |
-| 稳定 | 黄 `#FFD166` + 自发光 | — | — |
-| 参与骨骼 | — | 暖金 `#F2C66D` + 自发光 | — |
-| 激活关节 | — | — | 青 `#38D9E8` + 自发光 |
+| 基础 | 暗肌肉红 `#7E3A33`（带明暗变化） | 象牙 `#D8C8AE` | 灰青 `#3A6B72` |
+| 主责 | 深红 `#B53C33` + 微弱自发光 | — | — |
+| 协同 | 砖红 `#A95C3A` + 微弱自发光 | — | — |
+| 稳定 | 赭色 `#B08A50` + 微弱自发光 | — | — |
+| 参与骨骼 | — | 暖象牙 `#EFD8AF` + 微弱自发光 | — |
+| 激活关节 | — | — | 青 `#4FD6E0` + 自发光 |
 
-- 非参与结构默认**压暗**为 `#3A3431`；开启骨骼/关节层时，非参与肌肉以 0.22 不透明度呈现，形成可透视骨架的体表轮廓。
+- 非参与肌肉压暗为 `#462A27`；开启骨骼/关节层时以 0.4 不透明度呈现，形成可透视骨架的体表轮廓。未参与骨骼为 `#5F5749`（0.4），未参与关节为 `#2F555B`（0.35）。
 - 「仅显示参与结构」开启时，非参与组 `visible=false`。
-- 骨骼或关节层开启时，非参与肌肉切为半透明（opacity 0.22，`depthWrite=false`），参与肌肉保持不透明；两层都关闭时非参与肌肉为 0.45。
-- 颜色过渡在 RAF 中按每帧 12% 插值（约 0.4s 完成），尊重 `prefers-reduced-motion`（直接切换）。
+- 骨骼或关节层开启时，非参与肌肉切为半透明（opacity 0.4，`depthWrite=false`），参与肌肉保持不透明；两层都关闭时非参与肌肉为 0.64。
+- 颜色过渡在 RAF 中按指数缓动（约 0.3s 完成），尊重 `prefers-reduced-motion`（直接切换）。
 
 ### 关节循环动画
 
 - 每个激活关节生成 gizmo：Torus 圆环（半径按关节类型 0.042–0.05）+ 箭头锥体，按 `axis` 定向；CSS2D 标签显示「关节名 · 运动名」。肩胛胸壁属伪关节，无网格高亮，仅显示光点与标签。
 - 动画：绕轴在 `arc` 范围内以正弦缓动往复，周期 2.4s；圆环与箭头同步旋转。
-- 同时激活肌肉的自发光强度在 0.15–0.4 之间呼吸（周期 2.4s，与 gizmo 同相）。
+- 同时激活肌肉的自发光强度做 0.01–0.022 的微弱呼吸（周期 2.4s，与 gizmo 同相）。
 - 不做骨骼旋转或肌肉形变，避免破坏解剖模型。
 - 多关节动作最多同时显示 4 个 gizmo（深蹲含髋、膝、踝、腰椎四轴）。
 - `prefers-reduced-motion: reduce` 时 gizmo 静止在弧线中点，标签保留。
@@ -367,13 +368,13 @@ ID 均为 kebab-case 英文。动作与结构数据中所有引用必须能解�
 
 ### 悬停拾取
 
-- pointermove 节流 50ms，射线只检测已加载的三个图层组。
+- pointermove 节流 50ms，射线只检测参与高亮的肌肉/骨骼/关节网格；肌腱层不做拾取。
 - 命中节点读取 `userData.groupId` 与图层类型，tooltip 显示中文名 + 类型（肌肉/骨骼/关节），跟随指针偏移 14px；指针离开或命中空白时隐藏。
 - 悬停仅做轻微提亮（自发光 +0.08），不改变角色高亮状态。
 
 ### 资源加载
 
-- 三个 GLB 并行加载，肌肉优先；加载完成前显示进度条与简化骨架占位。
+- 四个 GLB 并行加载，肌肉优先；加载完成前显示进度条与简化骨架占位。肌腱层挂到肌肉根节点，随肌肉图层显示/隐藏。
 - Draco 解码器放本地 `public/draco/`，不走 CDN。
 - 加载失败显示错误浮层与「重试」按钮；WebGL 不可用时显示静态提示。
 
@@ -428,21 +429,23 @@ ID 均为 kebab-case 英文。动作与结构数据中所有引用必须能解�
 
 1. 逐个导入 FBX，应用变换，统一坐标系；按包围盒把模型缩放到 1.75m、脚底 Y=0、X/Z 居中、面向 +Z。
 2. 肌肉层：排除 fascia / bursa / sheath / retinaculum / aponeurosis / tendon 命名的网格；按 `groups.json` 正则合并为 41 组；未映射网格并入 `other-muscles`。
-3. 骨骼层：排除 ≤6 面的占位网格；完整长骨与颅骨/肋骨/椎骨按规则合并为 20 组；手/足碎骨合并为简化组。
-4. 关节层：按关节名正则合并关节囊与韧带为 12 组（左右合并）。
-5. 去重：同组内包围盒重叠率 > 90% 的网格只保留面数最高者（处理 `.i/.j` 与 `.l/.r` 重复）。
-6. 减面：Decimate Collapse，目标三角面——肌肉 20 万、骨骼 12 万、关节 5 万；平滑着色。
-7. 每层赋予单一基础材质（颜色由前端材质覆盖），节点名 `muscle__<id>` / `bone__<id>` / `joint__<id>`。
-8. 导出 GLB（Draco level 6）+ `manifest.json`（图层节点、三角面数、包围盒、模型朝向）；同时写入 `public/models/LICENSE.txt`。
-9. 校验：每层三角面与文件大小在预算内；41/20/11 组全部存在（肩胛胸壁为 gizmo-only 伪关节）；不再有 6 面占位网格。
+3. 软组织层：从同一 FBX 提取 `tendon` / `retinaculum`（排除 bursa / sheath / synovial），合并为单节点 `soft__tissue`，独立导出 `soft-tissue.glb`。
+4. 骨骼层：排除 ≤20 面的占位网格；完整长骨与颅骨/肋骨/椎骨按规则合并为 20 组；手/足碎骨合并为简化组。
+5. 关节层：按关节名正则合并关节囊与韧带为 11 组（左右合并；肩胛胸壁无网格）。
+6. 去重：同组内包围盒重叠率 > 90% 的网格只保留面数最高者（处理 `.i/.j` 与 `.l/.r` 重复）。
+7. 减面：Decimate Collapse，目标三角面——肌肉 30 万、骨骼 15 万、关节 8 万、肌腱 9 万；平滑着色。
+8. 每层赋予单一基础材质（颜色由前端材质覆盖），节点名 `muscle__<id>` / `bone__<id>` / `joint__<id>` / `soft__tissue`。
+9. 导出 4 个 GLB（Draco level 6）+ `manifest.json`（图层节点、三角面数、包围盒、模型朝向）；同时写入 `public/models/LICENSE.txt`。
+10. 校验：每层三角面与文件大小在预算内；41/20/11 组与肌腱节点全部存在（肩胛胸壁为 gizmo-only 伪关节）；不再有 ≤6 面占位网格。
 
 ### 产物预算
 
 | 文件 | 目标大小 | 三角面 |
 |---|---|---|
-| muscles.glb | ≤ 7MB | ≤ 200k |
-| bones.glb | ≤ 3MB | ≤ 120k |
-| joints.glb | ≤ 2MB | ≤ 50k |
+| muscles.glb | ≤ 2MB | ≤ 300k |
+| bones.glb | ≤ 1MB | ≤ 150k |
+| joints.glb | ≤ 1MB | ≤ 80k |
+| soft-tissue.glb | ≤ 0.5MB | ≤ 90k |
 | manifest.json | < 20KB | — |
 
 总计 ≤ 12MB。
@@ -469,7 +472,7 @@ ID 均为 kebab-case 英文。动作与结构数据中所有引用必须能解�
 1. 数据完整性：每个动作的 muscle/bone/joint ID 均存在；每个动作主责 ≥1、协同/稳定非空；别名全局唯一且不与动作名重复；每个动作有视角与 ≥1 个关节运动。
 2. 骨骼推导：按关节规则生成的 bones 与数据中显式数组一致。
 3. 搜索：空查询返回全部；「卧推」首位为杠铃卧推；「bench」命中；大小写/空格归一化；分类过滤；无结果返回空数组。
-4. manifest 覆盖：数据中的 41/20/12 个 ID 中，除肩胛胸壁外的 41/20/11 个在对应图层 manifest 中都有节点。
+4. manifest 覆盖：数据中的 41/20/12 个 ID 中，除肩胛胸壁外的 41/20/11 个在对应图层 manifest 中都有节点；`soft-tissue` 图层包含 `tissue` 节点。
 
 ### 构建与类型
 

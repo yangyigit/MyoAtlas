@@ -13,7 +13,7 @@ pnpm build      # 类型检查 + 生产构建
 
 ## 技术栈
 
-Vue 3 + TypeScript + Vite + Pinia + Three.js（Draco GLB）。
+Vue 3 + TypeScript + Vite + Pinia + Three.js（Draco GLB、PBR/IBL）。
 
 ## 目录
 
@@ -21,7 +21,7 @@ Vue 3 + TypeScript + Vite + Pinia + Three.js（Draco GLB）。
 - `src/three/`：场景、材质高亮、相机、关节 gizmo、拾取
 - `src/stores/`：唯一状态源
 - `src/components/`：搜索、3D 视口、详情、图层、图例、许可弹窗
-- `public/models/`：肌肉 / 骨骼 / 关节 Draco GLB 与 manifest
+- `public/models/`：肌肉 / 骨骼 / 关节 / 肌腱 4 个 Draco GLB 与 manifest
 - `tools/anatomy-build/`：Blender 资源再生成管线
 - `tools/verify/`：Playwright 桌面验收脚本（可选）
 

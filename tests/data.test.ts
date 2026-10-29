@@ -84,6 +84,10 @@ describe('generated assets', () => {
     expect(muscleNodes.size).toBe(41)
     expect(boneNodes.size).toBe(20)
     expect(jointNodes.size).toBe(11)
+    const softLayer = (manifest.layers as Record<string, { nodes: { id: string }[] }>)[
+      'soft-tissue'
+    ]
+    expect(softLayer?.nodes[0]?.id).toBe('tissue')
     expect(totalBytes).toBeLessThanOrEqual(12 * 1024 * 1024)
     expect(manifest.model.height).toBe(1.75)
   })

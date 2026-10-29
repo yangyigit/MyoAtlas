@@ -145,5 +145,10 @@
       }
     ],
     "fallback": null
+  },
+  "connective": {
+    "minPolys": 20,
+    "patterns": ["\\btendon\\b", "retinaculum"],
+    "exclude": "bursa|sheath|synovial"
   }
 }

@@ -14,8 +14,8 @@ const VIEWS: Record<ExerciseCategory, ExerciseView> = {
   chest: { camera: [0.72, 1.72, 1.45], target: [0, 1.18, 0], fov: 35 },
   back: { camera: [-0.9, 1.65, -1.65], target: [0, 1.18, 0], fov: 35 },
   shoulder: { camera: [0.85, 1.62, 1.35], target: [0, 1.32, 0], fov: 35 },
-  arm: { camera: [1.0, 1.28, 1.35], target: [0.28, 1.02, 0], fov: 35 },
-  leg: { camera: [0.9, 1.25, 2.4], target: [0, 0.85, 0], fov: 35 },
+  arm: { camera: [1.15, 1.3, 1.6], target: [0.25, 1.0, 0], fov: 35 },
+  leg: { camera: [0.95, 1.3, 2.75], target: [0, 0.9, 0], fov: 35 },
   core: { camera: [0.7, 1.22, 1.9], target: [0, 1.0, 0], fov: 35 },
 }
 
@@ -250,7 +250,7 @@ export const EXERCISES: Exercise[] = [
     aliases: ['硬拉', '传统硬拉', 'deadlift'],
     category: 'back',
     equipment: '杠铃',
-    view: view('back', { camera: [2.1, 1.15, 1.1], target: [0, 0.85, 0] }),
+    view: view('back', { camera: [2.6, 1.2, 1.3], target: [0, 0.88, 0] }),
     muscles: roles(
       ['gluteus-maximus', 'hamstrings', 'erector-spinae'],
       ['quadriceps', 'latissimus-dorsi', 'trapezius-mid', 'forearm-flexors'],
@@ -513,7 +513,7 @@ export const EXERCISES: Exercise[] = [
     aliases: ['罗马尼亚硬拉', 'rdl', 'romanian deadlift'],
     category: 'leg',
     equipment: '杠铃',
-    view: view('leg', { camera: [2.1, 1.15, 1.1], target: [0, 0.85, 0] }),
+    view: view('leg', { camera: [2.6, 1.2, 1.3], target: [0, 0.88, 0] }),
     muscles: roles(
       ['hamstrings', 'gluteus-maximus'],
       ['erector-spinae', 'adductors'],
