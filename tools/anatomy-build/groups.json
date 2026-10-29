@@ -1,0 +1,149 @@
+{
+  "muscles": {
+    "exclude": "\\bfasci(a|al)\\b|\\bbursa\\b|\\bsheath\\b|\\bretinaculum\\b|\\baponeurosis\\b|\\btendon\\b|\\braphe\\b|\\bseptum\\b|\\bskin\\b|\\bcartilage\\b|\\bligament\\b|\\bnerve\\b|\\bartery\\b|\\bvein\\b|\\blymph\\b",
+    "groups": [
+      { "id": "pectoralis-major", "patterns": ["pectoralis major"] },
+      { "id": "pectoralis-minor", "patterns": ["pectoralis minor"] },
+      { "id": "serratus-anterior", "patterns": ["serratus anterior"] },
+      { "id": "deltoid-anterior", "patterns": ["clavicular part of deltoid"] },
+      { "id": "deltoid-lateral", "patterns": ["acromial part of deltoid"] },
+      { "id": "deltoid-posterior", "patterns": ["scapular spinal part of deltoid"] },
+      { "id": "trapezius-upper", "patterns": ["descending part of trapezius"] },
+      { "id": "trapezius-mid", "patterns": ["transverse part of trapezius"] },
+      { "id": "trapezius-lower", "patterns": ["ascending part of trapezius"] },
+      { "id": "latissimus-dorsi", "patterns": ["latissimus dorsi"] },
+      { "id": "rhomboid", "patterns": ["rhomboid (major|minor)"] },
+      { "id": "levator-scapulae", "patterns": ["^levator scapulae"] },
+      { "id": "teres-major", "patterns": ["teres major"] },
+      { "id": "teres-minor", "patterns": ["teres minor"] },
+      { "id": "infraspinatus", "patterns": ["infraspinatus"] },
+      { "id": "supraspinatus", "patterns": ["supraspinatus"] },
+      { "id": "subscapularis", "patterns": ["subscapularis"] },
+      { "id": "erector-spinae", "patterns": ["^(iliocostalis|longissimus|spinalis)"] },
+      { "id": "rectus-abdominis", "patterns": ["rectus abdominis"] },
+      { "id": "external-oblique", "patterns": ["external abdominal oblique"] },
+      { "id": "internal-oblique", "patterns": ["internal abdominal oblique"] },
+      { "id": "transversus-abdominis", "patterns": ["transversus abdominis"] },
+      { "id": "iliopsoas", "patterns": ["psoas major", "iliacus"] },
+      { "id": "biceps-brachii", "patterns": ["biceps brachii"] },
+      { "id": "brachialis", "patterns": ["brachialis muscle"] },
+      { "id": "brachioradialis", "patterns": ["brachioradialis"] },
+      { "id": "triceps-brachii", "patterns": ["triceps brachii"] },
+      {
+        "id": "forearm-flexors",
+        "patterns": ["flexor carpi", "flexor digitorum (superficialis|profundus)", "flexor pollicis longus", "flexor digiti minimi of hand", "pronator", "palmaris longus"]
+      },
+      {
+        "id": "forearm-extensors",
+        "patterns": ["extensor carpi", "extensor digitorum(?! (longus|brevis))", "extensor pollicis", "extensor indicis", "supinator", "anconeus", "abductor pollicis longus"]
+      },
+      { "id": "gluteus-maximus", "patterns": ["gluteus maximus"] },
+      { "id": "gluteus-medius", "patterns": ["gluteus medius"] },
+      { "id": "gluteus-minimus", "patterns": ["gluteus minimus"] },
+      { "id": "tensor-fasciae-latae", "patterns": ["tensor fasciae latae"] },
+      { "id": "adductors", "patterns": ["adductor (longus|brevis|magnus|minimus)", "pectineus", "gracilis"] },
+      { "id": "quadriceps", "patterns": ["rectus femoris", "vastus (lateralis|medialis|intermedius)"] },
+      { "id": "hamstrings", "patterns": ["biceps femoris", "semitendinosus", "semimembranosus"] },
+      { "id": "gastrocnemius", "patterns": ["gastrocnemius"] },
+      { "id": "soleus", "patterns": ["soleus"] },
+      { "id": "tibialis-anterior", "patterns": ["tibialis anterior muscle"] },
+      { "id": "fibularis", "patterns": ["fibularis|peroneus"] }
+    ],
+    "fallback": "other-muscles"
+  },
+  "bones": {
+    "minPolys": 20,
+    "groups": [
+      {
+        "id": "cranium",
+        "patterns": [
+          "(frontal|parietal|occipital|temporal|sphenoid|ethmoid|zygomatic|nasal|lacrimal|palatine|vomer) bone",
+          "^maxilla\\.[lr]$",
+          "^vomer$",
+          "inferior nasal concha"
+        ]
+      },
+      { "id": "mandible", "patterns": ["^mandible$"] },
+      { "id": "clavicle", "patterns": ["^clavicle\\.[lr]$"] },
+      { "id": "scapula", "patterns": ["^scapula\\.[lr]$"] },
+      { "id": "humerus", "patterns": ["^humerus\\.[lr]$"] },
+      { "id": "radius", "patterns": ["^radius\\.[lr]$"] },
+      { "id": "ulna", "patterns": ["^ulna\\.[lr]$"] },
+      {
+        "id": "ribs",
+        "patterns": ["(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth) rib\\.[lr]$"]
+      },
+      { "id": "sternum", "patterns": ["body of sternum", "manubrium of sternum"] },
+      { "id": "spine", "patterns": ["^vertebra [ctl][0-9]+$", "^sacrum$", "^atlas \\(c1\\)$", "^axis \\(c2\\)$", "^coccyx$"] },
+      { "id": "pelvis", "patterns": ["^hip bone\\.[lr]$"] },
+      { "id": "femur", "patterns": ["^femur\\.[lr]$"] },
+      { "id": "patella", "patterns": ["^patella\\.[lr]$"] },
+      { "id": "tibia", "patterns": ["^tibia\\.[lr]$"] },
+      { "id": "fibula", "patterns": ["^fibula\\.[lr]$"] },
+      { "id": "calcaneus", "patterns": ["^calcaneus\\.[lr]$"] },
+      { "id": "talus", "patterns": ["^talus\\.[lr]$"] },
+      {
+        "id": "hand",
+        "patterns": [
+          "(distal|middle|proximal) phalanx of .*hand",
+          "finger of hand",
+          "metacarpal bone",
+          "(scaphoid|lunate|triquetral|pisiform|trapezium|trapezoid|capitate|hamate) bone"
+        ]
+      },
+      {
+        "id": "foot",
+        "patterns": [
+          "(distal|middle|proximal) phalanx of .*foot",
+          "finger of foot",
+          "metatarsal bone",
+          "(medial|intermediate|lateral) cuneiform bone",
+          "navicular bone",
+          "cuboid bone",
+          "sesamoid bones of foot"
+        ]
+      },
+      { "id": "other-bones", "patterns": ["^hyoid bone$"] }
+    ],
+    "fallback": null
+  },
+  "joints": {
+    "minPolys": 20,
+    "exclude": "cross section|interphalangeal|metacarpophalangeal|metatarsophalangeal|carpometacarpal|intercarpal|metacarpal|temporomandibular|cricopharyngeal",
+    "groups": [
+      {
+        "id": "shoulder",
+        "patterns": ["glenohumeral", "coraco-acromial", "coracohumeral", "glenoid labrum"]
+      },
+      { "id": "acromioclavicular", "patterns": ["acromioclavicular", "conoid ligament", "trapezoid ligament"] },
+      { "id": "sternoclavicular", "patterns": ["sternoclavicular", "costoclavicular"] },
+      {
+        "id": "cervical-spine",
+        "patterns": ["nuchal", "\\balar ligament\\b", "transverse ligament of atlas", "cruciate ligament of atlas", "tectorial", "atlanto-occipital", "apical ligament"]
+      },
+      {
+        "id": "elbow",
+        "patterns": ["elbow joint", "ulnar collateral", "radial collateral", "annular ligament of radius", "quadrate ligament", "olecranon"]
+      },
+      { "id": "wrist", "patterns": ["radiocarpal", "radio-ulnar", "ulnocarpal"] },
+      {
+        "id": "hip",
+        "patterns": ["hip joint", "iliofemoral", "ischiofemoral", "pubofemoral", "zona orbicularis", "acetabular labrum", "ligament of head of femur", "transverse acetabular"]
+      },
+      {
+        "id": "knee",
+        "patterns": ["superior tibiofibular", "anterior ligament of fibular head", "knee joint", "menisc", "patellar ligament", "patellar retinaculum", "popliteal", "tibial collateral", "fibular collateral", "coronary ligament", "cruciate ligament"]
+      },
+      {
+        "id": "ankle",
+        "patterns": ["talocrural", "deltoid ligament", "talofibular", "calcaneofibular", "tibiofibular", "talocalcaneal", "calcaneonavicular"]
+      },
+      { "id": "sacroiliac", "patterns": ["sacro-iliac", "sacrotuberous", "sacrospinous", "iliolumbar"] },
+      {
+        "id": "lumbar-spine",
+        "patterns": ["anterior longitudinal", "posterior longitudinal", "ligamentum flavum", "interspinous", "supraspinous", "intertransverse", "intervertebral disc"]
+      }
+    ],
+    "fallback": null
+  }
+}

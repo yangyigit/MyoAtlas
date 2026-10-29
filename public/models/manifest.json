@@ -1,0 +1,428 @@
+{
+  "generatedAt": "2026-10-29T09:10:02Z",
+  "source": {
+    "atlas": "Z-Anatomy (CC BY-SA 4.0)",
+    "database": "BodyParts3D (CC BY-SA 2.1 Japan)"
+  },
+  "model": {
+    "height": 1.75,
+    "up": "Y",
+    "forward": "+Z"
+  },
+  "layers": {
+    "muscles": {
+      "file": "muscles.glb",
+      "bytes": 759392,
+      "bounds": {
+        "min": [
+          -0.3639,
+          -0.0,
+          -0.2049
+        ],
+        "max": [
+          0.3824,
+          1.75,
+          0.2049
+        ]
+      },
+      "nodes": [
+        {
+          "id": "adductors",
+          "node": "muscle__adductors",
+          "tris": 4544
+        },
+        {
+          "id": "biceps-brachii",
+          "node": "muscle__biceps-brachii",
+          "tris": 1234
+        },
+        {
+          "id": "brachialis",
+          "node": "muscle__brachialis",
+          "tris": 968
+        },
+        {
+          "id": "brachioradialis",
+          "node": "muscle__brachioradialis",
+          "tris": 1528
+        },
+        {
+          "id": "deltoid-anterior",
+          "node": "muscle__deltoid-anterior",
+          "tris": 606
+        },
+        {
+          "id": "deltoid-lateral",
+          "node": "muscle__deltoid-lateral",
+          "tris": 618
+        },
+        {
+          "id": "deltoid-posterior",
+          "node": "muscle__deltoid-posterior",
+          "tris": 914
+        },
+        {
+          "id": "erector-spinae",
+          "node": "muscle__erector-spinae",
+          "tris": 8270
+        },
+        {
+          "id": "external-oblique",
+          "node": "muscle__external-oblique",
+          "tris": 6190
+        },
+        {
+          "id": "fibularis",
+          "node": "muscle__fibularis",
+          "tris": 1996
+        },
+        {
+          "id": "forearm-extensors",
+          "node": "muscle__forearm-extensors",
+          "tris": 5274
+        },
+        {
+          "id": "forearm-flexors",
+          "node": "muscle__forearm-flexors",
+          "tris": 8198
+        },
+        {
+          "id": "gastrocnemius",
+          "node": "muscle__gastrocnemius",
+          "tris": 2374
+        },
+        {
+          "id": "gluteus-maximus",
+          "node": "muscle__gluteus-maximus",
+          "tris": 694
+        },
+        {
+          "id": "gluteus-medius",
+          "node": "muscle__gluteus-medius",
+          "tris": 1080
+        },
+        {
+          "id": "gluteus-minimus",
+          "node": "muscle__gluteus-minimus",
+          "tris": 1304
+        },
+        {
+          "id": "hamstrings",
+          "node": "muscle__hamstrings",
+          "tris": 4488
+        },
+        {
+          "id": "iliopsoas",
+          "node": "muscle__iliopsoas",
+          "tris": 2052
+        },
+        {
+          "id": "infraspinatus",
+          "node": "muscle__infraspinatus",
+          "tris": 660
+        },
+        {
+          "id": "internal-oblique",
+          "node": "muscle__internal-oblique",
+          "tris": 6032
+        },
+        {
+          "id": "latissimus-dorsi",
+          "node": "muscle__latissimus-dorsi",
+          "tris": 4508
+        },
+        {
+          "id": "levator-scapulae",
+          "node": "muscle__levator-scapulae",
+          "tris": 644
+        },
+        {
+          "id": "other-muscles",
+          "node": "muscle__other-muscles",
+          "tris": 103302
+        },
+        {
+          "id": "pectoralis-major",
+          "node": "muscle__pectoralis-major",
+          "tris": 1166
+        },
+        {
+          "id": "pectoralis-minor",
+          "node": "muscle__pectoralis-minor",
+          "tris": 864
+        },
+        {
+          "id": "quadriceps",
+          "node": "muscle__quadriceps",
+          "tris": 6322
+        },
+        {
+          "id": "rectus-abdominis",
+          "node": "muscle__rectus-abdominis",
+          "tris": 4304
+        },
+        {
+          "id": "rhomboid",
+          "node": "muscle__rhomboid",
+          "tris": 1314
+        },
+        {
+          "id": "serratus-anterior",
+          "node": "muscle__serratus-anterior",
+          "tris": 5274
+        },
+        {
+          "id": "soleus",
+          "node": "muscle__soleus",
+          "tris": 1414
+        },
+        {
+          "id": "subscapularis",
+          "node": "muscle__subscapularis",
+          "tris": 616
+        },
+        {
+          "id": "supraspinatus",
+          "node": "muscle__supraspinatus",
+          "tris": 298
+        },
+        {
+          "id": "tensor-fasciae-latae",
+          "node": "muscle__tensor-fasciae-latae",
+          "tris": 388
+        },
+        {
+          "id": "teres-major",
+          "node": "muscle__teres-major",
+          "tris": 240
+        },
+        {
+          "id": "teres-minor",
+          "node": "muscle__teres-minor",
+          "tris": 318
+        },
+        {
+          "id": "tibialis-anterior",
+          "node": "muscle__tibialis-anterior",
+          "tris": 736
+        },
+        {
+          "id": "transversus-abdominis",
+          "node": "muscle__transversus-abdominis",
+          "tris": 7172
+        },
+        {
+          "id": "trapezius-lower",
+          "node": "muscle__trapezius-lower",
+          "tris": 960
+        },
+        {
+          "id": "trapezius-mid",
+          "node": "muscle__trapezius-mid",
+          "tris": 624
+        },
+        {
+          "id": "trapezius-upper",
+          "node": "muscle__trapezius-upper",
+          "tris": 1412
+        },
+        {
+          "id": "triceps-brachii",
+          "node": "muscle__triceps-brachii",
+          "tris": 2144
+        }
+      ]
+    },
+    "bones": {
+      "file": "bones.glb",
+      "bytes": 435844,
+      "bounds": {
+        "min": [
+          -0.3024,
+          0.0917,
+          -0.1051
+        ],
+        "max": [
+          0.3209,
+          1.6712,
+          0.1276
+        ]
+      },
+      "nodes": [
+        {
+          "id": "calcaneus",
+          "node": "bone__calcaneus",
+          "tris": 632
+        },
+        {
+          "id": "clavicle",
+          "node": "bone__clavicle",
+          "tris": 676
+        },
+        {
+          "id": "cranium",
+          "node": "bone__cranium",
+          "tris": 22096
+        },
+        {
+          "id": "femur",
+          "node": "bone__femur",
+          "tris": 1656
+        },
+        {
+          "id": "fibula",
+          "node": "bone__fibula",
+          "tris": 550
+        },
+        {
+          "id": "foot",
+          "node": "bone__foot",
+          "tris": 6020
+        },
+        {
+          "id": "hand",
+          "node": "bone__hand",
+          "tris": 6040
+        },
+        {
+          "id": "humerus",
+          "node": "bone__humerus",
+          "tris": 1868
+        },
+        {
+          "id": "mandible",
+          "node": "bone__mandible",
+          "tris": 4110
+        },
+        {
+          "id": "other-bones",
+          "node": "bone__other-bones",
+          "tris": 288
+        },
+        {
+          "id": "patella",
+          "node": "bone__patella",
+          "tris": 120
+        },
+        {
+          "id": "pelvis",
+          "node": "bone__pelvis",
+          "tris": 1652
+        },
+        {
+          "id": "radius",
+          "node": "bone__radius",
+          "tris": 342
+        },
+        {
+          "id": "ribs",
+          "node": "bone__ribs",
+          "tris": 58214
+        },
+        {
+          "id": "scapula",
+          "node": "bone__scapula",
+          "tris": 11056
+        },
+        {
+          "id": "spine",
+          "node": "bone__spine",
+          "tris": 15919
+        },
+        {
+          "id": "sternum",
+          "node": "bone__sternum",
+          "tris": 1556
+        },
+        {
+          "id": "talus",
+          "node": "bone__talus",
+          "tris": 588
+        },
+        {
+          "id": "tibia",
+          "node": "bone__tibia",
+          "tris": 728
+        },
+        {
+          "id": "ulna",
+          "node": "bone__ulna",
+          "tris": 394
+        }
+      ]
+    },
+    "joints": {
+      "file": "joints.glb",
+      "bytes": 259424,
+      "bounds": {
+        "min": [
+          -0.2639,
+          0.1254,
+          -0.095
+        ],
+        "max": [
+          0.2824,
+          1.5612,
+          0.0519
+        ]
+      },
+      "nodes": [
+        {
+          "id": "acromioclavicular",
+          "node": "joint__acromioclavicular",
+          "tris": 1632
+        },
+        {
+          "id": "ankle",
+          "node": "joint__ankle",
+          "tris": 1388
+        },
+        {
+          "id": "cervical-spine",
+          "node": "joint__cervical-spine",
+          "tris": 300
+        },
+        {
+          "id": "elbow",
+          "node": "joint__elbow",
+          "tris": 2434
+        },
+        {
+          "id": "hip",
+          "node": "joint__hip",
+          "tris": 9974
+        },
+        {
+          "id": "knee",
+          "node": "joint__knee",
+          "tris": 9338
+        },
+        {
+          "id": "lumbar-spine",
+          "node": "joint__lumbar-spine",
+          "tris": 39324
+        },
+        {
+          "id": "sacroiliac",
+          "node": "joint__sacroiliac",
+          "tris": 6688
+        },
+        {
+          "id": "shoulder",
+          "node": "joint__shoulder",
+          "tris": 4714
+        },
+        {
+          "id": "sternoclavicular",
+          "node": "joint__sternoclavicular",
+          "tris": 1522
+        },
+        {
+          "id": "wrist",
+          "node": "joint__wrist",
+          "tris": 1660
+        }
+      ]
+    }
+  }
+}

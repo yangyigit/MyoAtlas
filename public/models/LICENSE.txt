@@ -1,0 +1,22 @@
+3D MODEL LICENSE / ATTRIBUTION
+
+The GLB files in this directory are derivatives of open anatomy data:
+
+- Z-Anatomy — The open source atlas of anatomy
+  https://www.z-anatomy.com/
+  License: CC BY-SA 4.0
+
+- BodyParts3D, (c) The Database Center for Life Science
+  https://dbarchive.biosciencedbc.jp/en/bodyparts3d/
+  License: CC Attribution-Share Alike 2.1 Japan
+
+The source meshes were imported from the Z-Anatomy FBX resources, then
+grouped, decimated and compressed for web delivery. Derived GLB files are
+distributed under CC BY-SA 4.0.
+
+Attribution requirement:
+"BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan"
+"Z-Anatomy - The open source atlas of anatomy - CC-BY-SA 4.0"
+
+The exercise-to-muscle mapping in this application is authored from general
+kinesiology references for educational demonstration and is not medical advice.
