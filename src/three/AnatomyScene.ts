@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
-import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js'
+import { CSS2DObject, CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { BONE_BY_ID } from '../data/bones'
 import { JOINT_BY_ID } from '../data/joints'
@@ -77,6 +77,14 @@ export class AnatomyScene {
   private readonly scene = new THREE.Scene()
   private readonly camera: THREE.PerspectiveCamera
   private readonly controls: OrbitControls
+  private readonly planeLabels: Record<'sagittal' | 'coronal', CSS2DObject | null> = {
+    sagittal: null,
+    coronal: null,
+  }
+  private readonly planeGroups: Record<'sagittal' | 'coronal', THREE.Group> = {
+    sagittal: new THREE.Group(),
+    coronal: new THREE.Group(),
+  }
   private readonly layerRoots: Record<LayerName, THREE.Group> = {
     muscles: new THREE.Group(),
     bones: new THREE.Group(),
@@ -201,6 +209,70 @@ export class AnatomyScene {
     this.scene.add(glow)
 
     this.scene.add(this.layerRoots.muscles, this.layerRoots.bones, this.layerRoots.joints)
+
+    this.planeGroups.sagittal = this.createPlane('sagittal')
+    this.planeGroups.coronal = this.createPlane('coronal')
+    this.scene.add(this.planeGroups.sagittal, this.planeGroups.coronal)
+  }
+
+  private createPlane(kind: 'sagittal' | 'coronal') {
+    const group = new THREE.Group()
+    group.name = `plane-${kind}`
+    group.visible = false
+    const color = kind === 'sagittal' ? 0x38d9e8 : 0xf2b84b
+    const gridColor = kind === 'sagittal' ? 0x1f3a40 : 0x3a3122
+
+    const grid = new THREE.GridHelper(2.2, 22, color, gridColor)
+    grid.position.y = 0.9
+    if (kind === 'sagittal') grid.rotation.z = Math.PI / 2
+    else grid.rotation.x = Math.PI / 2
+    const gridMaterial = grid.material as THREE.LineBasicMaterial
+    gridMaterial.transparent = true
+    gridMaterial.opacity = 0.42
+    gridMaterial.depthTest = false
+    gridMaterial.depthWrite = false
+    grid.renderOrder = 2
+    group.add(grid)
+
+    const fillGeometry = new THREE.PlaneGeometry(2.2, 2.2)
+    const fillMaterial = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.025,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      depthTest: false,
+    })
+    const fill = new THREE.Mesh(fillGeometry, fillMaterial)
+    fill.position.y = 0.9
+    if (kind === 'sagittal') fill.rotation.y = Math.PI / 2
+    fill.renderOrder = 1
+    group.add(fill)
+
+    const labelEl = document.createElement('div')
+    labelEl.className = `plane-label ${kind}`
+    labelEl.textContent = kind === 'sagittal' ? '矢状面' : '冠状面'
+    const label = new CSS2DObject(labelEl)
+    label.position.set(kind === 'sagittal' ? 0 : 0.2, 1.05, kind === 'sagittal' ? 0.2 : 0)
+    label.element.style.display = 'none'
+    label.element.style.visibility = 'hidden'
+    this.planeLabels[kind] = label
+    group.add(label)
+
+    return group
+  }
+
+  setPlanes(planes: { sagittal: boolean; coronal: boolean }) {
+    for (const kind of ['sagittal', 'coronal'] as const) {
+      const visible = planes[kind]
+      this.planeGroups[kind].visible = visible
+      const label = this.planeLabels[kind]
+      if (label) {
+        label.visible = visible
+        label.element.style.display = visible ? '' : 'none'
+        label.element.style.visibility = visible ? 'visible' : 'hidden'
+      }
+    }
   }
 
   async load(baseUrl = '/models') {

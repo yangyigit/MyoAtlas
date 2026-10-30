@@ -24,6 +24,8 @@ export const useAnatomyStore = defineStore('anatomy', () => {
   const layers = reactive<Record<LayerName, boolean>>({ muscles: true, bones: true, joints: true })
   const isolateActive = ref(false)
   const autoFocus = ref(true)
+  const sagittalPlane = ref(false)
+  const coronalPlane = ref(false)
   const status = ref<LoadStatus>('idle')
   const progress = ref(0)
   const errorMessage = ref<string | null>(null)
@@ -102,6 +104,11 @@ export const useAnatomyStore = defineStore('anatomy', () => {
     isolateActive.value = !isolateActive.value
   }
 
+  function togglePlane(plane: 'sagittal' | 'coronal') {
+    if (plane === 'sagittal') sagittalPlane.value = !sagittalPlane.value
+    else coronalPlane.value = !coronalPlane.value
+  }
+
   function toggleAutoFocus() {
     autoFocus.value = !autoFocus.value
   }
@@ -133,6 +140,8 @@ export const useAnatomyStore = defineStore('anatomy', () => {
     layers,
     isolateActive,
     autoFocus,
+    sagittalPlane,
+    coronalPlane,
     status,
     progress,
     errorMessage,
@@ -148,6 +157,7 @@ export const useAnatomyStore = defineStore('anatomy', () => {
     setCategory,
     toggleLayer,
     toggleIsolate,
+    togglePlane,
     toggleAutoFocus,
     setStatus,
     setProgress,

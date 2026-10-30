@@ -399,3 +399,26 @@ button:focus-visible,
     animation: none !important;
   }
 }
+
+
+.plane-label {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(8, 12, 16, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.plane-label.sagittal {
+  color: #7feaf3;
+  border-color: rgba(56, 217, 232, 0.45);
+}
+
+.plane-label.coronal {
+  color: #f2c66d;
+  border-color: rgba(242, 184, 75, 0.45);
+}

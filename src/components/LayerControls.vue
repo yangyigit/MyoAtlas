@@ -34,12 +34,32 @@ const items: { id: LayerName; label: string; color: string }[] = [
       <i class="isolate" />
       <span>仅显示参与</span>
     </button>
+    <span class="divider" />
+    <button
+      class="layer-toggle plane-toggle"
+      :class="{ on: store.sagittalPlane }"
+      :aria-pressed="store.sagittalPlane"
+      @click="store.togglePlane('sagittal')"
+    >
+      <i class="plane-icon sagittal" />
+      <span>矢状面</span>
+    </button>
+    <button
+      class="layer-toggle plane-toggle coronal"
+      :class="{ on: store.coronalPlane }"
+      :aria-pressed="store.coronalPlane"
+      @click="store.togglePlane('coronal')"
+    >
+      <i class="plane-icon coronal" />
+      <span>冠状面</span>
+    </button>
   </div>
 </template>
 
 <style scoped>
 .layer-controls {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   padding: 5px;
@@ -91,6 +111,45 @@ const items: { id: LayerName; label: string; color: string }[] = [
   background: transparent;
   border: 1px solid currentColor;
   box-sizing: border-box;
+}
+
+.plane-toggle.on {
+  background: rgba(56, 217, 232, 0.1);
+  color: var(--cyan);
+}
+
+.plane-toggle.coronal.on {
+  background: rgba(242, 184, 75, 0.1);
+  color: #f2c66d;
+}
+
+.plane-icon {
+  width: 7px;
+  height: 7px;
+  border: 1px solid currentColor;
+  border-radius: 1px;
+  flex: none;
+  position: relative;
+}
+
+.plane-icon.sagittal::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: currentColor;
+}
+
+.plane-icon.coronal::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: -2px;
+  right: -2px;
+  height: 1px;
+  background: currentColor;
 }
 
 .divider {

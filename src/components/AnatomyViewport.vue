@@ -86,6 +86,10 @@ watch(
   (value) => scene?.setIsolate(value),
 )
 watch(
+  [() => store.sagittalPlane, () => store.coronalPlane],
+  () => scene?.setPlanes({ sagittal: store.sagittalPlane, coronal: store.coronalPlane }),
+)
+watch(
   () => store.autoFocus,
   (value) => {
     if (value) scene?.focus(store.selectedExercise.view)
@@ -352,6 +356,20 @@ watch(
   cursor: pointer;
 }
 
+@media (max-width: 1400px) and (min-width: 921px) {
+  .hud-top {
+    flex-wrap: wrap;
+  }
+
+  .actions {
+    margin-left: auto;
+  }
+
+  .hint {
+    display: none;
+  }
+}
+
 @media (max-width: 920px) {
   .hud-top {
     flex-direction: column;
@@ -360,7 +378,8 @@ watch(
   }
 
   .hud-top .layer-controls {
-    overflow-x: auto;
+    flex-wrap: wrap;
+    overflow: visible;
   }
 
   .actions {
