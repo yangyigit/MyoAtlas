@@ -4,8 +4,17 @@ import ExerciseSearch from './components/ExerciseSearch.vue'
 import AnatomyViewport from './components/AnatomyViewport.vue'
 import DetailPanel from './components/DetailPanel.vue'
 import AboutLicense from './components/AboutLicense.vue'
+import PainCheck from './components/PainCheck.vue'
+import { useAnatomyStore } from './stores/anatomy'
 
 const showAbout = ref(false)
+const showPain = ref(false)
+const store = useAnatomyStore()
+
+function openExerciseFromPain(id: string) {
+  store.selectExercise(id)
+  showPain.value = false
+}
 </script>
 
 <template>
@@ -21,6 +30,10 @@ const showAbout = ref(false)
       <div class="topbar-meta">
         <span class="tagline">选择动作 · 看见发力</span>
         <span class="source">Z-Anatomy · BodyParts3D</span>
+        <button class="pain-button" @click="showPain = true">
+          <span class="pain-dot" />
+          疼痛排查
+        </button>
         <button class="about-button" @click="showAbout = true">模型来源与许可</button>
       </div>
     </header>
@@ -37,6 +50,11 @@ const showAbout = ref(false)
       </aside>
     </main>
 
+    <PainCheck
+      v-if="showPain"
+      @close="showPain = false"
+      @select-exercise="openExerciseFromPain"
+    />
     <AboutLicense v-if="showAbout" @close="showAbout = false" />
   </div>
 </template>
@@ -117,6 +135,33 @@ const showAbout = ref(false)
   color: var(--faint);
   border-left: 1px solid var(--line);
   padding-left: 14px;
+}
+
+.pain-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 107, 90, 0.32);
+  background: rgba(255, 107, 90, 0.08);
+  color: #ff9b8c;
+  border-radius: 7px;
+  padding: 6px 11px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.pain-button:hover {
+  background: rgba(255, 107, 90, 0.14);
+  border-color: rgba(255, 107, 90, 0.5);
+}
+
+.pain-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px rgba(255, 107, 90, 0.6);
 }
 
 .about-button {

@@ -6,6 +6,7 @@ import { JOINTS } from '../src/data/joints'
 import { MUSCLES, MUSCLE_BY_ID } from '../src/data/muscles'
 import { searchExercises } from '../src/data/search'
 import { EXERCISE_KNOWLEDGE, JOINT_GUIDE, MUSCLE_KNOWLEDGE } from '../src/data/knowledge'
+import { DEFAULT_PAIN_ANSWERS, PAIN_REGIONS, triagePain } from '../src/data/pain'
 
 const muscleNodes = new Set(manifest.layers.muscles.nodes.map((node) => node.id))
 const boneNodes = new Set(manifest.layers.bones.nodes.map((node) => node.id))
@@ -125,6 +126,54 @@ describe('exercise knowledge', () => {
     for (const joint of JOINTS) {
       expect(JOINT_GUIDE[joint.id].romZh.length).toBeGreaterThan(3)
     }
+  })
+})
+
+describe('pain triage', () => {
+  it('covers body regions with valid references', () => {
+    expect(PAIN_REGIONS.length).toBeGreaterThanOrEqual(12)
+    expect(new Set(PAIN_REGIONS.map((region) => region.id)).size).toBe(PAIN_REGIONS.length)
+    for (const region of PAIN_REGIONS) {
+      expect(region.shapes.length, region.id).toBeGreaterThan(0)
+      expect(region.structures.length, region.id).toBeGreaterThan(0)
+      expect(region.exerciseIds.length, region.id).toBeGreaterThan(0)
+      for (const exerciseId of region.exerciseIds) {
+        expect(EXERCISES.some((exercise) => exercise.id === exerciseId), `${region.id} ${exerciseId}`).toBe(true)
+      }
+      for (const structure of region.structures) {
+        expect(structure.nameZh.length, region.id).toBeGreaterThan(0)
+        if (structure.muscleId) expect(MUSCLE_BY_ID[structure.muscleId], structure.nameZh).toBeTruthy()
+        if (structure.boneId) expect(BONE_BY_ID[structure.boneId], structure.nameZh).toBeTruthy()
+        if (structure.jointId) expect(JOINTS.some((joint) => joint.id === structure.jointId), structure.nameZh).toBe(true)
+      }
+    }
+  })
+
+  it('marks red flags as urgent', () => {
+    const flags = [
+      'swelling',
+      'locking',
+      'instability',
+      'numbness',
+      'weakness',
+      'trauma',
+      'nightPain',
+      'cantBearWeight',
+    ] as const
+    for (const flag of flags) {
+      expect(triagePain({ ...DEFAULT_PAIN_ANSWERS, [flag]: true }).level, flag).toBe('urgent')
+    }
+    expect(triagePain({ ...DEFAULT_PAIN_ANSWERS, intensity: 8 }).level).toBe('urgent')
+  })
+
+  it('recommends caution for moderate or persistent pain', () => {
+    expect(triagePain({ ...DEFAULT_PAIN_ANSWERS, intensity: 5 }).level).toBe('caution')
+    expect(triagePain({ ...DEFAULT_PAIN_ANSWERS, duration: '1to4w' }).level).toBe('caution')
+    expect(triagePain({ ...DEFAULT_PAIN_ANSWERS, onset: 'during' }).level).toBe('caution')
+  })
+
+  it('recommends self-care for mild short-lived pain', () => {
+    expect(triagePain(DEFAULT_PAIN_ANSWERS).level).toBe('self-care')
   })
 })
 
