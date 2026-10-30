@@ -629,3 +629,36 @@ ID 均为 kebab-case 英文。动作与结构数据中所有引用必须能解�
   - `depthTest=false` 使平面可穿透人体显示；关闭时同时隐藏网格、填充和标签
 - 开关位于图层面板，与肌肉/骨骼/关节图层并列；移动端自动换行
 - 两个平面相互独立，可只开其中一个；状态不持久化
+
+
+## 19. 跨端小程序 / H5 轻量版（追加）
+
+### 项目结构
+
+- 根目录：完整 3D Web 版（Three.js + Element Plus）
+- `miniapp/`：uni-app + unibest 跨端版本，同时构建 H5 和微信小程序
+- 数据通过 `scripts/sync-mini-data.mjs` 从 Web 端 `src/data` 同步到 `miniapp/src/data`
+
+### 渲染方案
+
+微信小程序没有 DOM/CSS2D，Three.js + GLB + Draco 需要平台适配层且风险高。小程序端改用 **2D Canvas** 绘制正面/背面人体与肌群色块：
+
+- 31 个动作的肌肉角色映射到 16 个展示肌群
+- 主责/协同/稳定三级配色，未参与肌群压暗
+- 正面/背面切换，动作切换自动选择视角
+- 保留动作知识、关节负荷、红旗、替代动作
+- 疼痛排查：区域选择、相关结构/动作、症状问卷、分诊、疼痛日记
+- 增肌：肌群动作覆盖、刺激画像、每周有效组数、训练日志
+- 数据保存在 `uni.setStorageSync` / `uni.getStorageSync`
+
+### 构建
+
+- H5：`pnpm build:h5`
+- 微信小程序：`pnpm build:mp-weixin`，导入 `dist/build/mp-weixin`
+- AppID：`miniapp/env/.env` 的 `VITE_WX_APPID`（当前 `touristappid`）
+
+### 限制
+
+- 2D 人体为肌群合并示意，不是 3D 旋转模型
+- 未实现 Element Plus（uni-app 原生组件 + 自定义深色样式）
+- 小程序端暂未实现完整个人档案与云端同步

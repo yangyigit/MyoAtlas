@@ -8,7 +8,8 @@
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "sync:mini-data": "node scripts/sync-mini-data.mjs"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",

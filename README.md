@@ -37,3 +37,25 @@ Vue 3 + TypeScript + Vite + Pinia + Three.js（Draco GLB、PBR/IBL）+ Element P
 模型来自 [Z-Anatomy](https://www.z-anatomy.com/)（CC BY-SA 4.0），数据源自 [BodyParts3D](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/)（CC BY-SA 2.1 Japan）。本应用中的衍生 GLB 同以 CC BY-SA 4.0 发布，详见 [public/models/LICENSE.txt](public/models/LICENSE.txt)。
 
 内容参考通用运动解剖学与力量训练资料，负荷等级表示动作对关节的相对要求，不是受伤概率。本工具用于学习与辅助排查，不构成医疗诊断或治疗建议。
+
+
+## 小程序 / H5 轻量版（miniapp）
+
+`miniapp/` 是基于 **uni-app + unibest** 的跨端版本，同时支持 H5 和微信小程序。它使用 2D Canvas 人体示意图，保留动作解剖、疼痛排查和增肌覆盖；桌面 3D 版本仍由仓库根项目提供。
+
+```bash
+cd miniapp
+pnpm install
+pnpm dev:h5          # H5，http://127.0.0.1:9000
+pnpm dev:mp-weixin   # 微信小程序，导入 dist/dev/mp-weixin
+pnpm build:h5
+pnpm build:mp-weixin
+```
+
+小程序 AppID 在 `miniapp/env/.env` 的 `VITE_WX_APPID` 中配置。数据层与 Web 版保持一致，修改 `src/data` 后执行：
+
+```bash
+pnpm sync:mini-data
+```
+
+说明：小程序端没有 Three.js 3D，人体为 2D Canvas 肌群示意；完整 3D 交互请使用根目录的 Web 版。
