@@ -1,7 +1,7 @@
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { BONE_BY_ID } from '../data/bones'
-import { CATEGORIES, DEFAULT_EXERCISE_ID, EXERCISE_BY_ID, EXERCISES, MOTION_SUPPORTED } from '../data/exercises'
+import { CATEGORIES, DEFAULT_EXERCISE_ID, EXERCISE_BY_ID, EXERCISES } from '../data/exercises'
 import { JOINT_BY_ID } from '../data/joints'
 import { MUSCLE_BY_ID } from '../data/muscles'
 import { searchExercises } from '../data/search'
@@ -17,7 +17,6 @@ export const useAnatomyStore = defineStore('anatomy', () => {
   const layers = reactive<Record<LayerName, boolean>>({ muscles: true, bones: true, joints: true })
   const isolateActive = ref(false)
   const autoFocus = ref(true)
-  const motionMode = ref(false)
   const status = ref<LoadStatus>('idle')
   const progress = ref(0)
   const errorMessage = ref<string | null>(null)
@@ -46,8 +45,6 @@ export const useAnatomyStore = defineStore('anatomy', () => {
   })
 
   const boneRows = computed(() => selectedExercise.value.bones.map((id) => BONE_BY_ID[id]))
-
-  const motionAvailable = computed(() => MOTION_SUPPORTED.has(selectedExercise.value.id))
 
   const jointRows = computed(() =>
     selectedExercise.value.joints.map((motion) => ({
@@ -82,18 +79,6 @@ export const useAnatomyStore = defineStore('anatomy', () => {
     autoFocus.value = !autoFocus.value
   }
 
-  function toggleMotion() {
-    if (!motionAvailable.value) {
-      motionMode.value = false
-      return
-    }
-    motionMode.value = !motionMode.value
-  }
-
-  watch(selectedExerciseId, () => {
-    if (!MOTION_SUPPORTED.has(selectedExercise.value.id)) motionMode.value = false
-  })
-
   function setStatus(value: LoadStatus) {
     status.value = value
   }
@@ -120,8 +105,6 @@ export const useAnatomyStore = defineStore('anatomy', () => {
     layers,
     isolateActive,
     autoFocus,
-    motionMode,
-    motionAvailable,
     status,
     progress,
     errorMessage,
@@ -136,7 +119,6 @@ export const useAnatomyStore = defineStore('anatomy', () => {
     toggleLayer,
     toggleIsolate,
     toggleAutoFocus,
-    toggleMotion,
     setStatus,
     setProgress,
     setError,

@@ -9,8 +9,6 @@ import { JOINT_BY_ID } from '../data/joints'
 import { MUSCLE_BY_ID } from '../data/muscles'
 import type { Exercise, ExerciseView, LayerName, MuscleRole } from '../data/types'
 import { JointGizmo } from './JointGizmo'
-import { MOTION_SUPPORTED } from '../data/exercises'
-import { MotionRig } from './MotionRig'
 import {
   createAnatomyMaterial,
   createConnectiveMaterial,
@@ -64,12 +62,6 @@ const DEFAULT_VIEW: ExerciseView = {
   fov: 35,
 }
 
-const MOTION_VIEW: ExerciseView = {
-  camera: [2.3, 1.05, 1.9],
-  target: [0, 0.62, 0.1],
-  fov: 35,
-}
-
 const KIND: Record<LayerName, SceneHover['kind']> = {
   muscles: '肌肉',
   bones: '骨骼',
@@ -93,8 +85,6 @@ export class AnatomyScene {
   private readonly pickables: THREE.Mesh[] = []
   private readonly softMeshes: THREE.Mesh[] = []
   private softMaterial: THREE.MeshPhysicalMaterial | null = null
-  private motionRig: MotionRig | null = null
-  private motionEnabled = false
   private readonly gizmos: JointGizmo[] = []
   private readonly raycaster = new THREE.Raycaster()
   private readonly pointer = new THREE.Vector2()
@@ -311,7 +301,6 @@ export class AnatomyScene {
       }
     }
     this.applyState()
-    this.motionRig?.setExercise(exercise)
   }
 
   private applyState() {
@@ -355,68 +344,15 @@ export class AnatomyScene {
   setLayers(layers: Record<LayerName, boolean>) {
     this.layers = { ...layers }
     for (const layer of Object.keys(this.layerRoots) as LayerName[]) {
-      this.layerRoots[layer].visible = !this.motionEnabled && layers[layer]
+      this.layerRoots[layer].visible = layers[layer]
     }
-    if (!this.motionEnabled) {
-      for (const gizmo of this.gizmos) gizmo.setVisible(layers.joints)
-    }
+    for (const gizmo of this.gizmos) gizmo.setVisible(layers.joints)
     this.applyState()
-    this.motionRig?.setLayers(layers)
   }
 
   setIsolate(value: boolean) {
     this.isolate = value
     this.applyState()
-    this.motionRig?.setIsolate(value)
-  }
-
-  setMotion(enabled: boolean) {
-    if (enabled === this.motionEnabled) return
-    if (enabled && !this.exercise) return
-    if (enabled && !MOTION_SUPPORTED.has(this.exercise!.id)) return
-
-    if (enabled) {
-      if (!this.motionRig) {
-        this.motionRig = new MotionRig(
-          this.scene,
-          [
-            ...this.meshEntries.map((entry) => ({
-              mesh: entry.mesh,
-              layer: entry.layer,
-              groupId: entry.groupId,
-            })),
-            ...this.softMeshes.map((mesh) => ({
-              mesh,
-              layer: 'muscles' as const,
-              groupId: 'soft-tissue',
-            })),
-          ],
-        )
-      }
-      this.motionEnabled = true
-      for (const layer of Object.keys(this.layerRoots) as LayerName[]) {
-        this.layerRoots[layer].visible = false
-      }
-      for (const gizmo of this.gizmos) gizmo.setVisible(false)
-      this.motionRig.setExercise(this.exercise)
-      this.motionRig.setLayers(this.layers)
-      this.motionRig.setIsolate(this.isolate)
-      this.motionRig.setEnabled(true)
-      this.setHovered(null)
-      this.focus(MOTION_VIEW)
-    } else {
-      this.motionEnabled = false
-      this.motionRig?.setEnabled(false)
-      for (const layer of Object.keys(this.layerRoots) as LayerName[]) {
-        this.layerRoots[layer].visible = this.layers[layer]
-      }
-      for (const gizmo of this.gizmos) gizmo.setVisible(this.layers.joints)
-      if (this.exercise) this.focus(this.exercise.view)
-    }
-  }
-
-  get isMotionEnabled() {
-    return this.motionEnabled
   }
 
   focus(view: ExerciseView) {
@@ -446,7 +382,7 @@ export class AnatomyScene {
   }
 
   resetView() {
-    this.focus(this.motionEnabled ? MOTION_VIEW : DEFAULT_VIEW)
+    this.focus(DEFAULT_VIEW)
   }
 
   private clearGizmos() {
@@ -457,10 +393,6 @@ export class AnatomyScene {
   }
 
   private handlePointerMove = (event: PointerEvent) => {
-    if (this.motionEnabled) {
-      this.setHovered(null)
-      return
-    }
     const rect = this.renderer.domElement.getBoundingClientRect()
     this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
     this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
@@ -555,8 +487,6 @@ export class AnatomyScene {
     const dt = Math.min((now - this.lastFrame) / 1000, 0.05)
     this.lastFrame = now
 
-    this.motionRig?.update(now, this.reducedMotion)
-
     for (const entry of this.meshEntries) {
       updateAnatomyMaterial(
         entry.state,
@@ -589,7 +519,6 @@ export class AnatomyScene {
     }
     for (const mesh of this.softMeshes) mesh.geometry.dispose()
     this.softMaterial?.dispose()
-    this.motionRig?.dispose()
     this.controls.dispose()
     this.renderer.dispose()
     this.renderer.domElement.remove()

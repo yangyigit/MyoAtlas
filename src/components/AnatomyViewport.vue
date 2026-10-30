@@ -35,7 +35,6 @@ function syncScene(focus = store.autoFocus) {
   scene.setExercise(store.selectedExercise)
   scene.setLayers({ ...store.layers })
   scene.setIsolate(store.isolateActive)
-  scene.setMotion(store.motionMode)
   if (focus) scene.focus(store.selectedExercise.view)
 }
 
@@ -89,14 +88,7 @@ watch(
 watch(
   () => store.autoFocus,
   (value) => {
-    if (value && !store.motionMode) scene?.focus(store.selectedExercise.view)
-  },
-)
-watch(
-  () => store.motionMode,
-  (value) => {
-    tooltip.value = null
-    scene?.setMotion(value)
+    if (value) scene?.focus(store.selectedExercise.view)
   },
 )
 </script>
@@ -108,17 +100,6 @@ watch(
     <div class="hud hud-top">
       <LayerControls />
       <div class="actions">
-        <button
-          class="glass action motion-action"
-          :class="{ active: store.motionMode }"
-          :disabled="!store.motionAvailable"
-          :aria-pressed="store.motionMode"
-          :title="store.motionAvailable ? '播放动作演示' : '该动作暂未提供运动演示'"
-          @click="store.toggleMotion()"
-        >
-          <span class="motion-dot" />
-          运动
-        </button>
         <button
           class="glass action"
           :class="{ active: store.autoFocus }"
@@ -240,33 +221,6 @@ watch(
 
 .action:hover {
   color: var(--text);
-}
-
-.action:disabled {
-  opacity: 0.38;
-  cursor: not-allowed;
-}
-
-.motion-action {
-  color: var(--cyan);
-  border-color: rgba(56, 217, 232, 0.28);
-}
-
-.motion-action:not(.active):not(:disabled) {
-  color: var(--muted);
-}
-
-.motion-action.active {
-  background: rgba(56, 217, 232, 0.12);
-  color: var(--cyan);
-  border-color: rgba(56, 217, 232, 0.55);
-}
-
-.motion-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 2px;
-  background: currentColor;
 }
 
 .action.active {
