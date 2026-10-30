@@ -5,15 +5,32 @@ import AnatomyViewport from './components/AnatomyViewport.vue'
 import DetailPanel from './components/DetailPanel.vue'
 import AboutLicense from './components/AboutLicense.vue'
 import PainCheck from './components/PainCheck.vue'
+import HypertrophyPanel from './components/HypertrophyPanel.vue'
 import { useAnatomyStore } from './stores/anatomy'
 
 const showAbout = ref(false)
 const showPain = ref(false)
+const showHypertrophy = ref(false)
 const store = useAnatomyStore()
 
 function openExerciseFromPain(id: string) {
   store.selectExercise(id)
   showPain.value = false
+}
+
+function openPain() {
+  showHypertrophy.value = false
+  showPain.value = true
+}
+
+function openHypertrophy() {
+  showPain.value = false
+  showHypertrophy.value = true
+}
+
+function openExerciseFromHypertrophy(id: string) {
+  store.selectExercise(id)
+  showHypertrophy.value = false
 }
 </script>
 
@@ -30,9 +47,13 @@ function openExerciseFromPain(id: string) {
       <div class="topbar-meta">
         <span class="tagline">选择动作 · 看见发力</span>
         <span class="source">Z-Anatomy · BodyParts3D</span>
-        <button class="pain-button" @click="showPain = true">
+        <button class="pain-button" @click="openPain()">
           <span class="pain-dot" />
           疼痛排查
+        </button>
+        <button class="hyper-button" @click="openHypertrophy()">
+          <span class="hyper-dot" />
+          增肌面板
         </button>
         <button class="about-button" @click="showAbout = true">模型来源与许可</button>
       </div>
@@ -54,6 +75,11 @@ function openExerciseFromPain(id: string) {
       v-if="showPain"
       @close="showPain = false"
       @select-exercise="openExerciseFromPain"
+    />
+    <HypertrophyPanel
+      v-if="showHypertrophy"
+      @close="showHypertrophy = false"
+      @select-exercise="openExerciseFromHypertrophy"
     />
     <AboutLicense v-if="showAbout" @close="showAbout = false" />
   </div>
@@ -164,6 +190,33 @@ function openExerciseFromPain(id: string) {
   box-shadow: 0 0 8px rgba(255, 107, 90, 0.6);
 }
 
+.hyper-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(79, 214, 160, 0.32);
+  background: rgba(79, 214, 160, 0.08);
+  color: #7fe3bb;
+  border-radius: 7px;
+  padding: 6px 11px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.hyper-button:hover {
+  background: rgba(79, 214, 160, 0.14);
+  border-color: rgba(79, 214, 160, 0.5);
+}
+
+.hyper-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: currentColor;
+  box-shadow: 0 0 8px rgba(79, 214, 160, 0.6);
+}
+
 .about-button {
   border: 1px solid var(--line);
   background: transparent;
@@ -244,6 +297,36 @@ function openExerciseFromPain(id: string) {
 
   .panel {
     overflow-y: auto;
+  }
+
+  .topbar-meta {
+    gap: 8px;
+  }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .brand-text span {
+    display: none;
+  }
+
+  .brand-text strong {
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  .mark {
+    width: 28px;
+    height: 28px;
+  }
+
+  .about-button,
+  .pain-button,
+  .hyper-button {
+    padding: 5px 7px;
+    font-size: 10.5px;
   }
 }
 </style>

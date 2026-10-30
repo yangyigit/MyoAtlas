@@ -7,6 +7,7 @@ import { MUSCLES, MUSCLE_BY_ID } from '../src/data/muscles'
 import { searchExercises } from '../src/data/search'
 import { EXERCISE_KNOWLEDGE, JOINT_GUIDE, MUSCLE_KNOWLEDGE } from '../src/data/knowledge'
 import { DEFAULT_PAIN_ANSWERS, PAIN_REGIONS, triagePain } from '../src/data/pain'
+import { EXERCISE_STIMULUS, ROLE_WEIGHTS, volumeGuideFor } from '../src/data/hypertrophy'
 
 const muscleNodes = new Set(manifest.layers.muscles.nodes.map((node) => node.id))
 const boneNodes = new Set(manifest.layers.bones.nodes.map((node) => node.id))
@@ -125,6 +126,36 @@ describe('exercise knowledge', () => {
     }
     for (const joint of JOINTS) {
       expect(JOINT_GUIDE[joint.id].romZh.length).toBeGreaterThan(3)
+    }
+  })
+})
+
+describe('hypertrophy data', () => {
+  it('covers every exercise with a stimulus profile', () => {
+    for (const exercise of EXERCISES) {
+      const stimulus = EXERCISE_STIMULUS[exercise.id]
+      expect(stimulus, exercise.id).toBeTruthy()
+      expect(stimulus.emphasisZh.length).toBeGreaterThan(5)
+      expect(['lengthened', 'mid', 'shortened', 'balanced']).toContain(
+        stimulus.resistanceProfile,
+      )
+      expect(['low', 'medium', 'high']).toContain(stimulus.stability)
+      expect(['low', 'medium', 'high']).toContain(stimulus.skill)
+    }
+    expect(ROLE_WEIGHTS.primary).toBe(1)
+    expect(ROLE_WEIGHTS.stabilizer).toBeLessThan(ROLE_WEIGHTS.secondary)
+  })
+
+  it('provides volume guides for trainable muscles', () => {
+    for (const muscle of MUSCLES) {
+      const guide = volumeGuideFor(muscle)
+      if (muscle.id === 'other-muscles') {
+        expect(guide).toBeNull()
+        continue
+      }
+      expect(guide, muscle.id).toBeTruthy()
+      expect(guide!.min).toBeLessThanOrEqual(guide!.max)
+      expect(guide!.noteZh.length).toBeGreaterThan(3)
     }
   })
 })
