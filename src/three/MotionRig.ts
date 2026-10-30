@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { Exercise, ExerciseView, LayerName, MuscleRole } from '../data/types'
+import type { Exercise, LayerName, MuscleRole } from '../data/types'
 import {
   createAnatomyMaterial,
   createConnectiveMaterial,
@@ -10,7 +10,6 @@ import {
   updateAnatomyMaterial,
   type AnatomyMaterial,
 } from './materials'
-import { MOTION_CONFIGS, type EquipmentKind, type MotionConfig, type Vec3 } from './motionConfigs'
 
 export interface MotionSource {
   mesh: THREE.Mesh
@@ -58,19 +57,6 @@ interface MotionGroup {
   active: boolean
 }
 
-const DEFAULT_VIEW: ExerciseView = {
-  camera: [1.9, 1.3, 3.1],
-  target: [0, 0.9, 0],
-  fov: 34,
-}
-
-const lerpVec = (a: Vec3, b: Vec3, t: number) =>
-  new THREE.Vector3(
-    THREE.MathUtils.lerp(a[0], b[0], t),
-    THREE.MathUtils.lerp(a[1], b[1], t),
-    THREE.MathUtils.lerp(a[2], b[2], t),
-  )
-
 export class MotionRig {
   readonly root = new THREE.Group()
   readonly equipment = new THREE.Group()
@@ -85,13 +71,8 @@ export class MotionRig {
   private readonly jointCoverMaterial: THREE.MeshPhysicalMaterial
   private readonly jointCovers: THREE.Mesh[] = []
   private readonly jointCoverGeometries: THREE.BufferGeometry[] = []
-  private readonly props = new Map<EquipmentKind, THREE.Group>()
-  private readonly dumbbells: Record<'L' | 'R', THREE.Group> = {
-    L: new THREE.Group(),
-    R: new THREE.Group(),
-  }
-  private cableHandle: THREE.Group | null = null
-  private config: MotionConfig | null = null
+  private readonly bar = new THREE.Group()
+  private readonly bench = new THREE.Group()
   private exercise: Exercise | null = null
   private enabled = false
   private motionStartedAt = 0
@@ -241,15 +222,6 @@ export class MotionRig {
     this.root.updateMatrixWorld(true)
   }
 
-  private makeProp(kind: EquipmentKind) {
-    const group = new THREE.Group()
-    group.name = `equipment-${kind}`
-    group.visible = false
-    this.props.set(kind, group)
-    this.equipment.add(group)
-    return group
-  }
-
   private buildEquipment() {
     const padMaterial = new THREE.MeshStandardMaterial({ color: 0x15181d, roughness: 0.85 })
     const frameMaterial = new THREE.MeshStandardMaterial({
@@ -267,134 +239,73 @@ export class MotionRig {
       roughness: 0.55,
       metalness: 0.4,
     })
-    const matMaterial = new THREE.MeshStandardMaterial({ color: 0x161c22, roughness: 0.95 })
-    const ballMaterial = new THREE.MeshStandardMaterial({ color: 0x5b2b26, roughness: 0.6 })
-    this.equipmentMaterials.push(
-      padMaterial,
-      frameMaterial,
-      steelMaterial,
-      plateMaterial,
-      matMaterial,
-      ballMaterial,
-    )
+    this.equipmentMaterials.push(padMaterial, frameMaterial, steelMaterial, plateMaterial)
 
-    const addMesh = (
-      parent: THREE.Group,
-      geometry: THREE.BufferGeometry,
+    const addBox = (
+      w: number,
+      h: number,
+      d: number,
+      x: number,
+      y: number,
+      z: number,
       material: THREE.Material,
-      position: [number, number, number] = [0, 0, 0],
     ) => {
+      const geometry = new THREE.BoxGeometry(w, h, d)
       this.equipmentGeometries.push(geometry)
       const mesh = new THREE.Mesh(geometry, material)
-      mesh.position.set(...position)
-      parent.add(mesh)
-      return mesh
+      mesh.position.set(x, y, z)
+      this.bench.add(mesh)
     }
 
-    const bench = this.makeProp('bench')
-    addMesh(bench, new THREE.BoxGeometry(0.54, 0.09, 1.35), padMaterial, [0, 0.455, -0.3])
+    addBox(0.54, 0.09, 1.35, 0, 0.455, -0.3, padMaterial)
+    addBox(0.5, 0.05, 0.08, 0, 0.38, -0.9, frameMaterial)
+    addBox(0.5, 0.05, 0.08, 0, 0.38, 0.3, frameMaterial)
     for (const x of [-0.21, 0.21]) {
       for (const z of [-0.85, 0.25]) {
-        addMesh(bench, new THREE.BoxGeometry(0.045, 0.4, 0.045), frameMaterial, [x, 0.2, z])
+        addBox(0.045, 0.4, 0.045, x, 0.2, z, frameMaterial)
       }
     }
-    addMesh(bench, new THREE.BoxGeometry(0.5, 0.04, 0.04), frameMaterial, [0, 0.02, -0.85])
-    addMesh(bench, new THREE.BoxGeometry(0.5, 0.04, 0.04), frameMaterial, [0, 0.02, 0.25])
+    addBox(0.5, 0.04, 0.04, 0, 0.02, -0.85, frameMaterial)
+    addBox(0.5, 0.04, 0.04, 0, 0.02, 0.25, frameMaterial)
 
-    const barbell = this.makeProp('barbell')
     const barGeometry = new THREE.CylinderGeometry(0.012, 0.012, 1.5, 14)
     barGeometry.rotateZ(Math.PI / 2)
-    addMesh(barbell, barGeometry, steelMaterial)
+    this.equipmentGeometries.push(barGeometry)
+    this.bar.add(new THREE.Mesh(barGeometry, steelMaterial))
+
     for (const x of [-0.66, -0.6, 0.6, 0.66]) {
       const plateGeometry = new THREE.CylinderGeometry(0.16, 0.16, 0.028, 24)
       plateGeometry.rotateZ(Math.PI / 2)
-      addMesh(barbell, plateGeometry, plateMaterial, [x, 0, 0])
+      this.equipmentGeometries.push(plateGeometry)
+      const plate = new THREE.Mesh(plateGeometry, plateMaterial)
+      plate.position.x = x
+      this.bar.add(plate)
     }
+
     const collarGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.03, 12)
     collarGeometry.rotateZ(Math.PI / 2)
+    this.equipmentGeometries.push(collarGeometry)
     for (const x of [-0.56, 0.56]) {
-      addMesh(barbell, collarGeometry, steelMaterial, [x, 0, 0])
+      const collar = new THREE.Mesh(collarGeometry, steelMaterial)
+      collar.position.x = x
+      this.bar.add(collar)
     }
 
-    const dumbbells = this.makeProp('dumbbells')
-    for (const side of ['L', 'R'] as const) {
-      const group = this.dumbbells[side]
-      group.name = `dumbbell-${side}`
-      const handleGeometry = new THREE.CylinderGeometry(0.014, 0.014, 0.18, 10)
-      handleGeometry.rotateZ(Math.PI / 2)
-      addMesh(group, handleGeometry, steelMaterial)
-      for (const x of [-0.09, 0.09]) {
-        const weightGeometry = new THREE.CylinderGeometry(0.055, 0.055, 0.05, 16)
-        weightGeometry.rotateZ(Math.PI / 2)
-        addMesh(group, weightGeometry, plateMaterial, [x, 0, 0])
-      }
-      dumbbells.add(group)
-    }
-
-    const pullup = this.makeProp('pullup-bar')
-    const pullupBarGeometry = new THREE.CylinderGeometry(0.014, 0.014, 1.5, 12)
-    pullupBarGeometry.rotateZ(Math.PI / 2)
-    addMesh(pullup, pullupBarGeometry, steelMaterial, [0, 2.02, 0])
-    for (const x of [-0.75, 0.75]) {
-      addMesh(pullup, new THREE.BoxGeometry(0.06, 2.02, 0.06), frameMaterial, [x, 1.01, 0])
-    }
-
-    const dip = this.makeProp('dip-bars')
-    for (const x of [-0.3, 0.3]) {
-      const dipBarGeometry = new THREE.CylinderGeometry(0.016, 0.016, 1.1, 12)
-      dipBarGeometry.rotateX(Math.PI / 2)
-      addMesh(dip, dipBarGeometry, steelMaterial, [x, 0.95, 0])
-      for (const z of [-0.45, 0.45]) {
-        addMesh(dip, new THREE.BoxGeometry(0.05, 0.95, 0.05), frameMaterial, [x, 0.475, z])
-      }
-    }
-
-    const cable = this.makeProp('cable')
-    addMesh(cable, new THREE.BoxGeometry(0.12, 1.9, 0.12), frameMaterial, [0.9, 0.95, 0.4])
-    addMesh(cable, new THREE.BoxGeometry(0.22, 0.22, 0.16), padMaterial, [0.9, 1.85, 0.4])
-    const handle = new THREE.Group()
-    handle.name = 'cable-handle'
-    const handleGeometry = new THREE.TorusGeometry(0.05, 0.012, 8, 20)
-    addMesh(handle, handleGeometry, steelMaterial)
-    cable.add(handle)
-    this.cableHandle = handle
-
-    this.makeProp('mat')
-    addMesh(this.props.get('mat')!, new THREE.BoxGeometry(2.1, 0.03, 1.3), matMaterial, [0, 0.015, 0])
-
-    const step = this.makeProp('step')
-    addMesh(step, new THREE.BoxGeometry(0.7, 0.12, 0.36), padMaterial, [0, 0.06, 0.2])
-
-    const platform = this.makeProp('platform')
-    addMesh(platform, new THREE.BoxGeometry(0.9, 0.7, 0.08), padMaterial, [0, 0.55, 0.95])
-    addMesh(platform, new THREE.BoxGeometry(0.9, 0.05, 0.05), frameMaterial, [0, 0.2, 1.0])
-
-    const ball = this.makeProp('ball')
-    const ballGeometry = new THREE.SphereGeometry(0.12, 20, 16)
-    addMesh(ball, ballGeometry, ballMaterial)
-
+    this.equipment.add(this.bench, this.bar)
     this.equipment.visible = false
     this.scene.add(this.equipment)
-  }
-
-  private syncProps() {
-    const kinds = new Set<EquipmentKind>(this.config?.equipment ?? [])
-    for (const [kind, group] of this.props) {
-      group.visible = this.enabled && kinds.has(kind)
-    }
-    this.equipment.visible = this.enabled && kinds.size > 0
   }
 
   setEnabled(enabled: boolean) {
     this.enabled = enabled
     if (enabled) this.motionStartedAt = performance.now()
     this.root.visible = enabled
-    this.syncProps()
+    this.equipment.visible = enabled && Boolean(this.exercise)
     for (const cover of this.jointCovers) cover.visible = enabled && this.layers.muscles
     if (!enabled) return
     this.root.updateMatrixWorld(true)
     this.pose(0)
-    this.updateEquipment()
+    this.updateBar()
     for (const segment of this.segments) {
       segment.mesh.visible = this.layers[segment.layer]
     }
@@ -402,8 +313,7 @@ export class MotionRig {
 
   setExercise(exercise: Exercise | null) {
     this.exercise = exercise
-    this.config = exercise ? MOTION_CONFIGS[exercise.id] ?? null : null
-    this.syncProps()
+    this.equipment.visible = this.enabled && Boolean(exercise)
     if (!exercise) return
     const roleMap = new Map<string, MuscleRole>(exercise.muscles.map((m) => [m.id, m.role]))
     const boneSet = new Set<string>(exercise.bones)
@@ -432,10 +342,6 @@ export class MotionRig {
         this.layers[segment.layer] &&
         (!this.isolate || Boolean(group?.active) || segment.groupId === 'soft-tissue')
     }
-    if (this.enabled) {
-      this.pose(0)
-      this.updateEquipment()
-    }
   }
 
   setLayers(layers: Record<LayerName, boolean>) {
@@ -451,10 +357,6 @@ export class MotionRig {
     if (this.exercise) this.setExercise(this.exercise)
   }
 
-  getView(): ExerciseView {
-    return this.config?.view ?? DEFAULT_VIEW
-  }
-
   private orientBone(name: string, target: THREE.Vector3) {
     const group = this.bones.get(name)
     if (!group || !group.parent) return
@@ -467,99 +369,51 @@ export class MotionRig {
   }
 
   private pose(phase: number) {
-    const config = this.config
-    if (!config) return
-    const bob = config.root.bob
-      ? THREE.MathUtils.lerp(config.root.bob[0], config.root.bob[1], phase)
-      : 0
-    this.root.position.set(
-      config.root.position[0],
-      config.root.position[1] + bob,
-      config.root.position[2],
-    )
-    this.root.rotation.set(config.root.rotationX, 0, 0)
+    this.root.position.set(0, 0.55, 0.05)
+    this.root.rotation.set(-Math.PI / 2, 0, 0)
     for (const bone of this.bones.values()) bone.quaternion.identity()
     this.root.updateMatrixWorld(true)
 
-    if (config.spine) {
-      this.orientBone('spine', lerpVec(config.spine.start, config.spine.end, phase))
-      this.root.updateMatrixWorld(true)
-    }
-
+    const lift = phase
     for (const side of ['L', 'R'] as const) {
-      const mirror = side === 'L' ? 1 : -1
-      const upper = lerpVec(config.arms.start.upper, config.arms.end.upper, phase)
-      upper.x *= mirror
+      const sx = side === 'L' ? 1 : -1
+      const upper = new THREE.Vector3(
+        sx * (0.98 - lift * 0.3),
+        0.02 + lift * 0.72,
+        -0.14,
+      )
       this.orientBone(`upperarm.${side}`, upper)
       this.root.updateMatrixWorld(true)
 
-      const fore = lerpVec(config.arms.start.fore, config.arms.end.fore, phase)
-      fore.x *= mirror
+      const fore = new THREE.Vector3(
+        sx * (0.05 + lift * 0.12),
+        0.86 + lift * 0.12,
+        0.5 - lift * 0.42,
+      )
       this.orientBone(`forearm.${side}`, fore)
       this.bones.get(`hand.${side}`)!.quaternion.identity()
 
-      const thigh = lerpVec(config.legs.start.thigh, config.legs.end.thigh, phase)
-      thigh.x *= mirror
-      this.orientBone(`thigh.${side}`, thigh)
+      this.orientBone(`thigh.${side}`, new THREE.Vector3(sx * 0.03, 0.05, 1))
       this.root.updateMatrixWorld(true)
-
-      const shin = lerpVec(config.legs.start.shin, config.legs.end.shin, phase)
-      shin.x *= mirror
-      this.orientBone(`shin.${side}`, shin)
-
-      const foot = lerpVec(config.legs.start.foot, config.legs.end.foot, phase)
-      foot.x *= mirror
-      this.orientBone(`foot.${side}`, foot)
+      this.orientBone(`shin.${side}`, new THREE.Vector3(sx * 0.02, -1, 0.12))
+      this.orientBone(`foot.${side}`, new THREE.Vector3(0, -0.05, 1))
       this.root.updateMatrixWorld(true)
     }
     this.root.updateMatrixWorld(true)
   }
 
-  private handMidpoint() {
-    const left = new THREE.Vector3()
-    const right = new THREE.Vector3()
-    this.bones.get('hand.L')!.getWorldPosition(left)
-    this.bones.get('hand.R')!.getWorldPosition(right)
-    return { left, right, center: left.clone().add(right).multiplyScalar(0.5) }
-  }
-
-  private updateEquipment() {
-    const config = this.config
-    if (!config) return
-    const barbell = this.props.get('barbell')
-    if (barbell?.visible) {
-      if (config.barAnchor === 'back') {
-        const spine = new THREE.Vector3()
-        this.bones.get('spine')!.getWorldPosition(spine)
-        barbell.position.copy(spine).add(new THREE.Vector3(0, 0.3, 0))
-        barbell.quaternion.identity()
-      } else {
-        const { left, right, center } = this.handMidpoint()
-        center.y += 0.045
-        barbell.position.copy(center)
-        const direction = right.clone().sub(left).normalize()
-        barbell.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), direction)
-      }
-    }
-
-    if (this.props.get('dumbbells')?.visible) {
-      for (const side of ['L', 'R'] as const) {
-        const position = new THREE.Vector3()
-        this.bones.get(`hand.${side}`)!.getWorldPosition(position)
-        this.dumbbells[side].position.copy(position)
-      }
-    }
-
-    if (this.props.get('cable')?.visible && this.cableHandle) {
-      const { center } = this.handMidpoint()
-      this.cableHandle.position.copy(center)
-    }
-
-    if (this.props.get('ball')?.visible) {
-      const { center } = this.handMidpoint()
-      center.y += 0.05
-      this.props.get('ball')!.position.copy(center)
-    }
+  private updateBar() {
+    const left = this.bones.get('hand.L')!
+    const right = this.bones.get('hand.R')!
+    const leftPos = new THREE.Vector3()
+    const rightPos = new THREE.Vector3()
+    left.getWorldPosition(leftPos)
+    right.getWorldPosition(rightPos)
+    const center = leftPos.clone().add(rightPos).multiplyScalar(0.5)
+    center.y += 0.045
+    this.bar.position.copy(center)
+    const direction = rightPos.clone().sub(leftPos).normalize()
+    this.bar.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), direction)
   }
 
   update(now: number, reducedMotion: boolean) {
@@ -569,11 +423,15 @@ export class MotionRig {
       ? 0.55
       : 0.5 - 0.5 * Math.cos((elapsed / 2400) * Math.PI * 2)
     this.pose(phase)
-    this.updateEquipment()
+    this.updateBar()
     const dt = 1 / 60
     for (const group of this.groups.values()) {
       updateAnatomyMaterial(group.state, dt, now, false, !reducedMotion)
     }
+  }
+
+  get creatingMeshes(): number {
+    return this.segments.length
   }
 
   dispose() {
