@@ -36,7 +36,11 @@ function syncScene(focus = store.autoFocus) {
   scene.setLayers({ ...store.layers })
   scene.setIsolate(store.isolateActive)
   scene.setMotion(store.motionMode)
-  if (focus) scene.focus(store.selectedExercise.view)
+  if (focus) {
+    const view =
+      store.motionMode && scene.motionView ? scene.motionView : store.selectedExercise.view
+    scene.focus(view)
+  }
 }
 
 function createScene() {

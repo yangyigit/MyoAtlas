@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import manifest from '../public/models/manifest.json'
 import { BONES, BONE_BY_ID } from '../src/data/bones'
 import { EXERCISES, MOTION_SUPPORTED } from '../src/data/exercises'
+import { MOTION_CONFIGS } from '../src/three/motionConfigs'
 import { JOINTS } from '../src/data/joints'
 import { MUSCLES, MUSCLE_BY_ID } from '../src/data/muscles'
 import { searchExercises } from '../src/data/search'
@@ -117,8 +118,10 @@ describe('exercise search', () => {
     expect(searchExercises('').length).toBe(31)
   })
 
-  it('limits motion demos to the prepared bench press', () => {
-    expect(MOTION_SUPPORTED.has('barbell-bench-press')).toBe(true)
-    expect(MOTION_SUPPORTED.size).toBe(1)
+  it('provides a motion config for every exercise', () => {
+    expect(MOTION_SUPPORTED.size).toBe(EXERCISES.length)
+    for (const exercise of EXERCISES) {
+      expect(MOTION_CONFIGS[exercise.id], exercise.id).toBeTruthy()
+    }
   })
 })

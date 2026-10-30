@@ -64,12 +64,6 @@ const DEFAULT_VIEW: ExerciseView = {
   fov: 35,
 }
 
-const MOTION_VIEW: ExerciseView = {
-  camera: [2.3, 1.05, 1.9],
-  target: [0, 0.62, 0.1],
-  fov: 35,
-}
-
 const KIND: Record<LayerName, SceneHover['kind']> = {
   muscles: '肌肉',
   bones: '骨骼',
@@ -305,7 +299,7 @@ export class AnatomyScene {
         const joint = JOINT_BY_ID[motion.id]
         if (!joint) continue
         const gizmo = new JointGizmo(motion, joint)
-        gizmo.setVisible(this.layers.joints)
+        gizmo.setVisible(!this.motionEnabled && this.layers.joints)
         this.gizmos.push(gizmo)
         this.scene.add(gizmo.root)
       }
@@ -403,7 +397,7 @@ export class AnatomyScene {
       this.motionRig.setIsolate(this.isolate)
       this.motionRig.setEnabled(true)
       this.setHovered(null)
-      this.focus(MOTION_VIEW)
+      this.focus(this.motionRig.getView())
     } else {
       this.motionEnabled = false
       this.motionRig?.setEnabled(false)
@@ -417,6 +411,10 @@ export class AnatomyScene {
 
   get isMotionEnabled() {
     return this.motionEnabled
+  }
+
+  get motionView(): ExerciseView | null {
+    return this.motionRig?.getView() ?? null
   }
 
   focus(view: ExerciseView) {
@@ -446,7 +444,7 @@ export class AnatomyScene {
   }
 
   resetView() {
-    this.focus(this.motionEnabled ? MOTION_VIEW : DEFAULT_VIEW)
+    this.focus(this.motionEnabled ? this.motionRig?.getView() ?? DEFAULT_VIEW : DEFAULT_VIEW)
   }
 
   private clearGizmos() {

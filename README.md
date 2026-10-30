@@ -2,7 +2,7 @@
 
 输入或选择一个训练动作，用可旋转的 3D 解剖人体展示调用的肌肉、关节与骨骼。肌肉按主责 / 协同 / 稳定三级高亮，关节播放运动方向 gizmo，相机自动飞到目标部位特写。
 
-卧推动作支持「运动」模式：人体分段骨架执行仰卧推举循环，并显示卧推凳与杠铃。
+全部 31 个动作都支持「运动」模式：人体分段骨架按动作配置循环演示，并显示相应的杠铃、哑铃、卧推凳、单杠、绳索等器械。
 
 ## 本地运行
 
@@ -31,6 +31,6 @@ Vue 3 + TypeScript + Vite + Pinia + Three.js（Draco GLB、PBR/IBL）。
 
 模型来自 [Z-Anatomy](https://www.z-anatomy.com/)（CC BY-SA 4.0），数据源自 [BodyParts3D](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/)（CC BY-SA 2.1 Japan）。本应用中的衍生 GLB 同以 CC BY-SA 4.0 发布，详见 [public/models/LICENSE.txt](public/models/LICENSE.txt)。
 
-运动模式当前仅支持杠铃卧推；身体为刚性分段骨架，关节处用覆盖球遮盖接缝，后续可扩展到更多动作。
+运动模式为刚性分段骨架，关节处用覆盖球遮盖接缝；机械类与地面动作采用简化姿态。
 
 动作与肌肉映射参考通用运动解剖学资料，仅用于学习与演示，不构成医疗建议。

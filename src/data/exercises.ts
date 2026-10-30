@@ -638,7 +638,7 @@ export const EXERCISE_BY_ID = Object.fromEntries(EXERCISES.map((e) => [e.id, e])
 
 export const DEFAULT_EXERCISE_ID = 'barbell-bench-press'
 
-export const MOTION_SUPPORTED = new Set(['barbell-bench-press'])
+export const MOTION_SUPPORTED = new Set(EXERCISES.map((exercise) => exercise.id))
 
 export const CATEGORIES: { id: ExerciseCategory | 'all'; label: string }[] = [
   { id: 'all', label: '全部' },
