@@ -2,6 +2,7 @@ export type Region = 'chest' | 'back' | 'shoulder' | 'arm' | 'leg' | 'core' | 'h
 export type ExerciseCategory = Exclude<Region, 'head'>
 export type MuscleRole = 'primary' | 'secondary' | 'stabilizer'
 export type LayerName = 'muscles' | 'bones' | 'joints'
+export type StressLevel = 'low' | 'medium' | 'high'
 
 export type MuscleId =
   | 'pectoralis-major'

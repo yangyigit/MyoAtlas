@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { PALETTE } from '../three/materials'
+import { STRESS_COLORS } from '../data/knowledge'
 
 const items = [
   { label: '主责', color: PALETTE.primary },
   { label: '协同', color: PALETTE.secondary },
   { label: '稳定', color: PALETTE.stabilizer },
-  { label: '关节', color: PALETTE.jointActive },
+  { label: '关节低', color: STRESS_COLORS.low },
+  { label: '关节中', color: STRESS_COLORS.medium },
+  { label: '关节高', color: STRESS_COLORS.high },
   { label: '骨骼', color: PALETTE.boneActive },
 ]
 </script>
@@ -22,9 +25,11 @@ const items = [
 <style scoped>
 .legend {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 10px 12px;
   padding: 7px 12px;
+  max-width: min(430px, calc(100vw - 28px));
 }
 
 .legend-item {

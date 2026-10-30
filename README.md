@@ -1,6 +1,6 @@
 # 肌动图谱 · Kinesis Atlas
 
-输入或选择一个训练动作，用可旋转的 3D 解剖人体展示调用的肌肉、关节与骨骼。肌肉按主责 / 协同 / 稳定三级高亮，关节播放运动方向 gizmo，相机自动飞到目标部位特写。
+输入或选择一个训练动作，用可旋转的 3D 解剖人体展示调用的肌肉、关节与骨骼。肌肉按主责 / 协同 / 稳定三级高亮，关节按相对负荷分级着色，并给出肌肉功能、技术要点、常见错误、风险红旗与低风险替代。
 
 ## 本地运行
 
@@ -17,7 +17,7 @@ Vue 3 + TypeScript + Vite + Pinia + Three.js（Draco GLB、PBR/IBL）。
 
 ## 目录
 
-- `src/data/`：肌群、骨骼、关节、31 个动作及搜索逻辑
+- `src/data/`：肌群、骨骼、关节、31 个动作、搜索逻辑，以及动作知识库（肌肉功能、关节负荷、风险与替代）
 - `src/three/`：场景、材质高亮、相机、关节 gizmo、拾取
 - `src/stores/`：唯一状态源
 - `src/components/`：搜索、3D 视口、详情、图层、图例、许可弹窗
@@ -29,4 +29,4 @@ Vue 3 + TypeScript + Vite + Pinia + Three.js（Draco GLB、PBR/IBL）。
 
 模型来自 [Z-Anatomy](https://www.z-anatomy.com/)（CC BY-SA 4.0），数据源自 [BodyParts3D](https://dbarchive.biosciencedbc.jp/en/bodyparts3d/)（CC BY-SA 2.1 Japan）。本应用中的衍生 GLB 同以 CC BY-SA 4.0 发布，详见 [public/models/LICENSE.txt](public/models/LICENSE.txt)。
 
-动作与肌肉映射参考通用运动解剖学资料，仅用于学习与演示，不构成医疗建议。
+内容参考通用运动解剖学与力量训练资料，负荷等级表示动作对关节的相对要求，不是受伤概率。本工具用于学习与辅助排查，不构成医疗诊断或治疗建议。

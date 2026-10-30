@@ -5,7 +5,14 @@ import { CATEGORIES, DEFAULT_EXERCISE_ID, EXERCISE_BY_ID, EXERCISES } from '../d
 import { JOINT_BY_ID } from '../data/joints'
 import { MUSCLE_BY_ID } from '../data/muscles'
 import { searchExercises } from '../data/search'
-import type { ExerciseCategory, LayerName, MuscleRole } from '../data/types'
+import {
+  EXERCISE_KNOWLEDGE,
+  GLOBAL_RED_FLAGS,
+  JOINT_GUIDE,
+  MUSCLE_KNOWLEDGE,
+  type ExerciseKnowledge,
+} from '../data/knowledge'
+import type { ExerciseCategory, LayerName, MuscleRole, StressLevel } from '../data/types'
 
 export type LoadStatus = 'idle' | 'loading' | 'ready' | 'error'
 export type HoverKind = '肌肉' | '骨骼' | '关节'
@@ -26,6 +33,19 @@ export const useAnatomyStore = defineStore('anatomy', () => {
     () => EXERCISE_BY_ID[selectedExerciseId.value] ?? EXERCISES[0],
   )
 
+  const knowledge = computed<ExerciseKnowledge>(() => {
+    return (
+      EXERCISE_KNOWLEDGE[selectedExercise.value.id] ?? {
+        summaryZh: '',
+        jointStress: {},
+        cues: [],
+        errors: [],
+        risks: [],
+        substitutions: [],
+      }
+    )
+  })
+
   const results = computed(() => searchExercises(query.value, category.value))
 
   const muscleRows = computed(() => {
@@ -40,18 +60,25 @@ export const useAnatomyStore = defineStore('anatomy', () => {
       label: labels[role],
       muscles: selectedExercise.value.muscles
         .filter((m) => m.role === role)
-        .map((m) => MUSCLE_BY_ID[m.id]),
+        .map((m) => ({ ...MUSCLE_BY_ID[m.id], ...MUSCLE_KNOWLEDGE[m.id] })),
     }))
   })
 
   const boneRows = computed(() => selectedExercise.value.bones.map((id) => BONE_BY_ID[id]))
 
   const jointRows = computed(() =>
-    selectedExercise.value.joints.map((motion) => ({
-      joint: JOINT_BY_ID[motion.id],
-      motion,
-    })),
+    selectedExercise.value.joints.map((motion) => {
+      const guide = JOINT_GUIDE[motion.id]
+      const stress = knowledge.value.jointStress[motion.id] ?? {
+        level: 'low' as StressLevel,
+        noteZh: '该动作对此关节的相对要求较低，但仍需保持控制。',
+      }
+      return { joint: JOINT_BY_ID[motion.id], motion, guide, stress }
+    }),
   )
+
+  const substitutions = computed(() => knowledge.value.substitutions)
+  const redFlags = computed(() => GLOBAL_RED_FLAGS)
 
   function selectExercise(id: string) {
     if (EXERCISE_BY_ID[id]) selectedExerciseId.value = id
@@ -102,6 +129,7 @@ export const useAnatomyStore = defineStore('anatomy', () => {
     categories: CATEGORIES,
     selectedExerciseId,
     selectedExercise,
+    knowledge,
     layers,
     isolateActive,
     autoFocus,
@@ -113,6 +141,8 @@ export const useAnatomyStore = defineStore('anatomy', () => {
     muscleRows,
     boneRows,
     jointRows,
+    substitutions,
+    redFlags,
     selectExercise,
     setQuery,
     setCategory,

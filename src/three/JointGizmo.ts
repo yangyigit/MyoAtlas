@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js'
-import type { JointGroup, JointMotion } from '../data/types'
+import { STRESS_COLORS } from '../data/knowledge'
+import type { JointGroup, JointMotion, StressLevel } from '../data/types'
 
 const PERIOD = 2400
 
@@ -11,19 +12,20 @@ export class JointGizmo {
   private readonly label: CSS2DObject
   private readonly arc: [number, number]
 
-  constructor(motion: JointMotion, joint: JointGroup) {
+  constructor(motion: JointMotion, joint: JointGroup, stress: StressLevel = 'low') {
     this.arc = motion.arc
     this.root.name = `gizmo__${joint.id}`
     this.root.userData.jointId = joint.id
 
     const axis = new THREE.Vector3(...motion.axis).normalize()
     const orientation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), axis)
+    const stressColor = new THREE.Color(STRESS_COLORS[stress])
     const isPseudo = joint.type === 'pseudo'
     const radius = joint.type === 'ball-and-socket' ? 0.05 : isPseudo ? 0.045 : 0.042
 
     const dotGeometry = new THREE.SphereGeometry(isPseudo ? 0.007 : 0.009, 12, 12)
     const dotMaterial = new THREE.MeshBasicMaterial({
-      color: 0x9ff7ff,
+      color: stressColor.clone().lerp(new THREE.Color(0xffffff), 0.45),
       transparent: true,
       opacity: 0.95,
       depthTest: false,
@@ -39,7 +41,7 @@ export class JointGizmo {
     if (!isPseudo) {
       ringGeometry = new THREE.TorusGeometry(radius, 0.0022, 10, 64)
       ringMaterial = new THREE.MeshBasicMaterial({
-        color: 0x38d9e8,
+        color: stressColor,
         transparent: true,
         opacity: 0.85,
         depthTest: false,
@@ -48,7 +50,7 @@ export class JointGizmo {
       })
       arrowGeometry = new THREE.ConeGeometry(0.0065, 0.018, 10)
       arrowMaterial = new THREE.MeshBasicMaterial({
-        color: 0x38d9e8,
+        color: stressColor,
         transparent: true,
         opacity: 1,
         depthTest: false,
@@ -89,6 +91,8 @@ export class JointGizmo {
     name.textContent = joint.nameZh
     const motionName = document.createElement('em')
     motionName.textContent = motion.motionZh
+    labelEl.style.borderColor = `${STRESS_COLORS[stress]}66`
+    motionName.style.color = STRESS_COLORS[stress]
     labelEl.append(name, motionName)
     this.label = new CSS2DObject(labelEl)
     const lift = isPseudo ? 0.035 : 0.075

@@ -6,6 +6,7 @@ import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { BONE_BY_ID } from '../data/bones'
 import { JOINT_BY_ID } from '../data/joints'
+import { EXERCISE_KNOWLEDGE } from '../data/knowledge'
 import { MUSCLE_BY_ID } from '../data/muscles'
 import type { Exercise, ExerciseView, LayerName, MuscleRole } from '../data/types'
 import { JointGizmo } from './JointGizmo'
@@ -294,7 +295,8 @@ export class AnatomyScene {
       for (const motion of exercise.joints) {
         const joint = JOINT_BY_ID[motion.id]
         if (!joint) continue
-        const gizmo = new JointGizmo(motion, joint)
+        const stress = EXERCISE_KNOWLEDGE[exercise.id]?.jointStress[motion.id]?.level ?? 'low'
+        const gizmo = new JointGizmo(motion, joint, stress)
         gizmo.setVisible(this.layers.joints)
         this.gizmos.push(gizmo)
         this.scene.add(gizmo.root)

@@ -5,6 +5,7 @@ import { EXERCISES } from '../src/data/exercises'
 import { JOINTS } from '../src/data/joints'
 import { MUSCLES, MUSCLE_BY_ID } from '../src/data/muscles'
 import { searchExercises } from '../src/data/search'
+import { EXERCISE_KNOWLEDGE, JOINT_GUIDE, MUSCLE_KNOWLEDGE } from '../src/data/knowledge'
 
 const muscleNodes = new Set(manifest.layers.muscles.nodes.map((node) => node.id))
 const boneNodes = new Set(manifest.layers.bones.nodes.map((node) => node.id))
@@ -90,6 +91,40 @@ describe('generated assets', () => {
     expect(softLayer?.nodes[0]?.id).toBe('tissue')
     expect(totalBytes).toBeLessThanOrEqual(12 * 1024 * 1024)
     expect(manifest.model.height).toBe(1.75)
+  })
+})
+
+describe('exercise knowledge', () => {
+  it('covers every exercise with cues, risks and valid substitutions', () => {
+    for (const exercise of EXERCISES) {
+      const knowledge = EXERCISE_KNOWLEDGE[exercise.id]
+      expect(knowledge, exercise.id).toBeTruthy()
+      expect(knowledge.summaryZh.length).toBeGreaterThan(10)
+      expect(knowledge.cues.length).toBeGreaterThan(0)
+      expect(knowledge.errors.length).toBeGreaterThan(0)
+      expect(knowledge.risks.length).toBeGreaterThan(0)
+      expect(knowledge.substitutions.length).toBeGreaterThan(0)
+      for (const joint of exercise.joints) {
+        expect(
+          knowledge.jointStress[joint.id]?.level,
+          `${exercise.id} ${joint.id}`,
+        ).toMatch(/^(low|medium|high)$/)
+      }
+      for (const substitution of knowledge.substitutions) {
+        if (substitution.exerciseId) {
+          expect(EXERCISES.some((item) => item.id === substitution.exerciseId)).toBe(true)
+        }
+      }
+    }
+  })
+
+  it('documents every muscle and joint', () => {
+    for (const muscle of MUSCLES) {
+      expect(MUSCLE_KNOWLEDGE[muscle.id].functionZh.length).toBeGreaterThan(5)
+    }
+    for (const joint of JOINTS) {
+      expect(JOINT_GUIDE[joint.id].romZh.length).toBeGreaterThan(3)
+    }
   })
 })
 
