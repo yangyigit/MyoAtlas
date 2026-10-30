@@ -602,3 +602,18 @@ ID 均为 kebab-case 英文。动作与结构数据中所有引用必须能解�
 
 - 尚未做自动训练计划生成、动作进阶算法与云端同步
 - 有效组数按角色线性折算，未区分动作质量、幅度与接近力竭程度
+
+
+## 17. UI 优化与 Element Plus 接入（追加）
+
+- 保留现有深色解剖风格与三栏布局，选择性引入 Element Plus，而不是整体替换为默认浅色主题。
+- 深色主题：在 `html.dark` 下覆盖 `--el-bg-color`、`--el-text-color-*`、`--el-border-color`、主色/状态色、圆角与字体；Element Plus 的输入框、下拉、滑杆、勾选、Tabs、按钮统一为深色。
+- 已接入控件：
+  - 搜索：`ElInput`（前缀搜索图标、清空、键盘 Enter 选择）
+  - 疼痛排查：`ElRadioGroup/RadioButton`、`ElSlider`、`ElSelect/Option`、`ElCheckTag`、`ElInput`、`ElButton`、`ElMessage`
+  - 增肌面板：`ElTabs/TabPane`、`ElSelect/Option/OptionGroup`、`ElCheckbox`、`ElInputNumber`、`ElDatePicker`、`ElInput`、`ElButton`、`ElMessage`
+  - 详情面板：`ElTooltip` 展示肌肉功能/常见问题
+  - 顶栏：Element Plus 图标 + `ElIcon`
+  - 中文 locale：`ElConfigProvider` + `zh-cn`
+- 交互优化：弹窗淡入/上浮动画、焦点可见轮廓、卡片/结构行悬停过渡、疼痛红旗吸顶状态条、自动滚动到分诊结果。
+- 工程：按需引入 Element Plus 组件，避免全量注册；JS 约 1.2MB（gzip 343KB），CSS 仍为全量主题（gzip 57KB）。

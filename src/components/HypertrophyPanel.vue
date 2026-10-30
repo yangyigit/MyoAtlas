@@ -14,6 +14,19 @@ import {
 } from '../data/hypertrophy'
 import { PAIN_REGIONS, PAIN_REGION_BY_ID } from '../data/pain'
 import { PALETTE } from '../three/materials'
+import {
+  ElButton,
+  ElCheckbox,
+  ElDatePicker,
+  ElInput,
+  ElInputNumber,
+  ElMessage,
+  ElOption,
+  ElOptionGroup,
+  ElSelect,
+  ElTabPane,
+  ElTabs,
+} from 'element-plus'
 import type { MuscleId, MuscleRole, Region, StressLevel } from '../data/types'
 
 const emit = defineEmits<{ close: []; selectExercise: [id: string] }>()
@@ -192,7 +205,6 @@ const logWeight = ref(20)
 const logRpe = ref(8)
 const logPain = ref(false)
 const logNote = ref('')
-const logSaved = ref(false)
 
 function addTrainingEntry() {
   if (!EXERCISE_BY_ID[logExerciseId.value]) return
@@ -207,10 +219,7 @@ function addTrainingEntry() {
     note: logNote.value.trim(),
   })
   logNote.value = ''
-  logSaved.value = true
-  window.setTimeout(() => {
-    logSaved.value = false
-  }, 1600)
+  ElMessage.success('已添加训练记录')
 }
 
 const recentEntries = computed(() =>
@@ -239,8 +248,6 @@ const profileForm = ref<HypertrophyProfile>({
   ...training.profile,
   painRegionIds: [...training.profile.painRegionIds],
 })
-const profileSaved = ref(false)
-
 function toggleProfilePain(regionId: string) {
   const set = new Set(profileForm.value.painRegionIds)
   if (set.has(regionId)) set.delete(regionId)
@@ -250,10 +257,7 @@ function toggleProfilePain(regionId: string) {
 
 function saveProfile() {
   training.saveProfile({ ...profileForm.value, painRegionIds: [...profileForm.value.painRegionIds] })
-  profileSaved.value = true
-  window.setTimeout(() => {
-    profileSaved.value = false
-  }, 1600)
+  ElMessage.success('个人档案已保存')
 }
 
 const painRegionsGrouped = computed(() => [
@@ -263,6 +267,10 @@ const painRegionsGrouped = computed(() => [
 
 function selectExercise(id: string) {
   emit('selectExercise', id)
+}
+
+function onMuscleChange(value: string) {
+  selectedMuscleId.value = value as MuscleId
 }
 </script>
 
@@ -279,27 +287,37 @@ function selectExercise(id: string) {
           <button class="close" aria-label="关闭" @click="emit('close')">×</button>
         </header>
 
-        <nav class="tabs">
-          <button :class="{ active: tab === 'coverage' }" @click="tab = 'coverage'">肌群覆盖</button>
-          <button :class="{ active: tab === 'log' }" @click="tab = 'log'">训练日志</button>
-          <button :class="{ active: tab === 'profile' }" @click="tab = 'profile'">个人档案</button>
-        </nav>
+        <el-tabs v-model="tab" class="hyper-tabs">
+          <el-tab-pane label="肌群覆盖" name="coverage" />
+          <el-tab-pane label="训练日志" name="log" />
+          <el-tab-pane label="个人档案" name="profile" />
+        </el-tabs>
 
         <div class="hyper-content">
           <template v-if="tab === 'coverage'">
             <section class="muscle-picker">
               <label class="muscle-select">
                 <span>选择肌群</span>
-                <select
-                  :value="selectedMuscleId"
-                  @change="selectedMuscleId = ($event.target as HTMLSelectElement).value as MuscleId"
+                <el-select
+                  :model-value="selectedMuscleId"
+                  size="small"
+                  filterable
+                  class="muscle-el-select"
+                  @update:model-value="onMuscleChange"
                 >
-                  <optgroup v-for="group in muscleGroups" :key="group.region" :label="group.label">
-                    <option v-for="muscle in group.muscles" :key="muscle.id" :value="muscle.id">
-                      {{ muscle.nameZh }}
-                    </option>
-                  </optgroup>
-                </select>
+                  <el-option-group
+                    v-for="group in muscleGroups"
+                    :key="group.region"
+                    :label="group.label"
+                  >
+                    <el-option
+                      v-for="muscle in group.muscles"
+                      :key="muscle.id"
+                      :label="muscle.nameZh"
+                      :value="muscle.id"
+                    />
+                  </el-option-group>
+                </el-select>
               </label>
               <div class="quick-muscles">
                 <button
@@ -343,14 +361,8 @@ function selectExercise(id: string) {
                 <span>主责 {{ visiblePrimaryCount }} 个 · 共 {{ coverageRows.length }} 个动作</span>
               </div>
               <div class="coverage-filters">
-                <label class="primary-toggle">
-                  <input v-model="primaryOnly" type="checkbox" />
-                  只看主责
-                </label>
-                <label class="primary-toggle">
-                  <input v-model="onlyAvailable" type="checkbox" />
-                  只看器械可用
-                </label>
+                <el-checkbox v-model="primaryOnly" size="small">只看主责</el-checkbox>
+                <el-checkbox v-model="onlyAvailable" size="small">只看器械可用</el-checkbox>
               </div>
             </div>
 
@@ -412,41 +424,71 @@ function selectExercise(id: string) {
               <div class="form-grid">
                 <label>
                   <span>动作</span>
-                  <select v-model="logExerciseId">
-                    <option v-for="exercise in EXERCISES" :key="exercise.id" :value="exercise.id">
-                      {{ exercise.nameZh }}
-                    </option>
-                  </select>
+                  <el-select v-model="logExerciseId" size="small" filterable>
+                    <el-option
+                      v-for="exercise in EXERCISES"
+                      :key="exercise.id"
+                      :label="exercise.nameZh"
+                      :value="exercise.id"
+                    />
+                  </el-select>
                 </label>
                 <label>
                   <span>日期</span>
-                  <input v-model="logDate" type="date" />
+                  <el-date-picker
+                    v-model="logDate"
+                    type="date"
+                    size="small"
+                    value-format="YYYY-MM-DD"
+                    class="log-date"
+                  />
                 </label>
                 <label>
                   <span>组数</span>
-                  <input v-model.number="logSets" type="number" min="1" max="20" />
+                  <el-input-number
+                    v-model="logSets"
+                    size="small"
+                    :min="1"
+                    :max="20"
+                    controls-position="right"
+                  />
                 </label>
                 <label>
                   <span>次数 / 组</span>
-                  <input v-model.number="logReps" type="number" min="1" max="100" />
+                  <el-input-number
+                    v-model="logReps"
+                    size="small"
+                    :min="1"
+                    :max="100"
+                    controls-position="right"
+                  />
                 </label>
                 <label>
                   <span>重量 kg</span>
-                  <input v-model.number="logWeight" type="number" min="0" max="500" step="0.5" />
+                  <el-input-number
+                    v-model="logWeight"
+                    size="small"
+                    :min="0"
+                    :max="500"
+                    :step="0.5"
+                    controls-position="right"
+                  />
                 </label>
                 <label>
                   <span>RPE</span>
-                  <input v-model.number="logRpe" type="number" min="1" max="10" />
+                  <el-input-number
+                    v-model="logRpe"
+                    size="small"
+                    :min="1"
+                    :max="10"
+                    controls-position="right"
+                  />
                 </label>
               </div>
               <div class="form-row">
-                <label class="pain-check">
-                  <input v-model="logPain" type="checkbox" />
-                  本次训练出现疼痛
-                </label>
-                <input v-model="logNote" class="note-input" type="text" maxlength="60" placeholder="备注（可选）" />
-                <button class="primary-button" @click="addTrainingEntry">添加记录</button>
-                <span v-if="logSaved" class="saved">已记录</span>
+                <el-checkbox v-model="logPain" size="small">本次训练出现疼痛</el-checkbox>
+                <el-input v-model="logNote" class="note-input" size="small" maxlength="60" placeholder="备注（可选）" />
+                <el-button type="primary" size="small" @click="addTrainingEntry">添加记录</el-button>
               </div>
             </section>
 
@@ -494,7 +536,9 @@ function selectExercise(id: string) {
                     </span>
                     <p v-if="entry.note">{{ entry.note }}</p>
                   </div>
-                  <button class="remove" @click="training.removeEntry(entry.id)">×</button>
+                  <el-button link type="danger" size="small" @click="training.removeEntry(entry.id)">
+                    删除
+                  </el-button>
                 </li>
               </ul>
             </section>
@@ -531,25 +575,24 @@ function selectExercise(id: string) {
               <div class="profile-grid">
                 <label>
                   <span>可用器械</span>
-                  <select v-model="profileForm.equipment">
-                    <option value="gym">健身房 / 全套器械</option>
-                    <option value="home">家庭 / 哑铃+单杠</option>
-                    <option value="bodyweight">自重</option>
-                  </select>
+                  <el-select v-model="profileForm.equipment" size="small">
+                    <el-option label="健身房 / 全套器械" value="gym" />
+                    <el-option label="家庭 / 哑铃+单杠" value="home" />
+                    <el-option label="自重" value="bodyweight" />
+                  </el-select>
                 </label>
                 <label>
                   <span>训练经验</span>
-                  <select v-model="profileForm.experience">
-                    <option value="beginner">初级（&lt;1 年）</option>
-                    <option value="intermediate">中级（1–3 年）</option>
-                    <option value="advanced">高级（&gt;3 年）</option>
-                  </select>
+                  <el-select v-model="profileForm.experience" size="small">
+                    <el-option label="初级（<1 年）" value="beginner" />
+                    <el-option label="中级（1–3 年）" value="intermediate" />
+                    <el-option label="高级（>3 年）" value="advanced" />
+                  </el-select>
                 </label>
               </div>
 
               <div class="profile-actions">
-                <button class="primary-button" @click="saveProfile">保存档案</button>
-                <span v-if="profileSaved" class="saved">已保存</span>
+                <el-button type="primary" size="small" @click="saveProfile">保存档案</el-button>
               </div>
             </section>
           </template>
@@ -623,27 +666,22 @@ function selectExercise(id: string) {
   padding: 2px 8px;
 }
 
-.tabs {
-  display: flex;
-  gap: 4px;
-  padding: 8px 24px 0;
-  border-bottom: 1px solid var(--line);
+ .hyper-tabs {
+  padding: 0 24px;
 }
 
-.tabs button {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
+.hyper-tabs :deep(.el-tabs__header) {
+  margin: 0;
+}
+
+.hyper-tabs :deep(.el-tabs__item) {
+  height: 40px;
   font-size: 11.5px;
-  padding: 7px 12px;
-  border-radius: 7px 7px 0 0;
-  cursor: pointer;
 }
 
-.tabs button.active {
-  color: var(--cyan);
-  background: rgba(56, 217, 232, 0.08);
-  box-shadow: inset 0 -2px 0 var(--cyan);
+.hyper-tabs :deep(.el-tabs__nav-wrap::after) {
+  height: 1px;
+  background: var(--line);
 }
 
 .hyper-content {
@@ -668,15 +706,8 @@ function selectExercise(id: string) {
   color: var(--muted);
 }
 
-.muscle-select select {
-  background: #0a0f14;
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  padding: 7px 10px;
-  font-size: 12px;
-  min-width: 220px;
-  outline: none;
+.muscle-el-select {
+  width: 240px;
 }
 
 .quick-muscles {
@@ -873,6 +904,12 @@ function selectExercise(id: string) {
   border-radius: 9px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.02);
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.coverage-item:hover {
+  border-color: rgba(56, 217, 232, 0.18);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .coverage-top {
@@ -1001,17 +1038,16 @@ function selectExercise(id: string) {
   color: var(--muted);
 }
 
-.form-grid input,
-.form-grid select,
-.profile-grid select {
-  background: #0a0f14;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  color: var(--text);
-  padding: 6px 7px;
-  font-size: 10.5px;
-  outline: none;
-  min-width: 0;
+.form-grid :deep(.el-select),
+.form-grid :deep(.el-input-number),
+.form-grid :deep(.el-date-editor),
+.profile-grid :deep(.el-select),
+.log-date {
+  width: 100%;
+}
+
+.form-grid :deep(.el-input-number .el-input__inner) {
+  text-align: left;
 }
 
 .form-row {
@@ -1035,14 +1071,7 @@ function selectExercise(id: string) {
 
 .note-input {
   flex: 1;
-  min-width: 140px;
-  background: #0a0f14;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  color: var(--text);
-  padding: 6px 8px;
-  font-size: 10.5px;
-  outline: none;
+  min-width: 160px;
 }
 
 .primary-button {
@@ -1241,8 +1270,8 @@ function selectExercise(id: string) {
     padding: 14px 16px 12px;
   }
 
-  .tabs {
-    padding: 6px 16px 0;
+  .hyper-tabs {
+    padding: 0 16px;
   }
 
   .hyper-content {

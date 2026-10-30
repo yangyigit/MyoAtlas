@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { FirstAidKit, InfoFilled, TrendCharts } from '@element-plus/icons-vue'
+import { ElConfigProvider, ElIcon } from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import ExerciseSearch from './components/ExerciseSearch.vue'
 import AnatomyViewport from './components/AnatomyViewport.vue'
 import DetailPanel from './components/DetailPanel.vue'
@@ -35,7 +38,8 @@ function openExerciseFromHypertrophy(id: string) {
 </script>
 
 <template>
-  <div class="app">
+  <el-config-provider :locale="zhCn">
+    <div class="app">
     <header class="topbar">
       <div class="brand">
         <span class="mark">肌</span>
@@ -48,14 +52,17 @@ function openExerciseFromHypertrophy(id: string) {
         <span class="tagline">选择动作 · 看见发力</span>
         <span class="source">Z-Anatomy · BodyParts3D</span>
         <button class="pain-button" @click="openPain()">
-          <span class="pain-dot" />
+          <el-icon class="button-icon"><FirstAidKit /></el-icon>
           疼痛排查
         </button>
         <button class="hyper-button" @click="openHypertrophy()">
-          <span class="hyper-dot" />
+          <el-icon class="button-icon"><TrendCharts /></el-icon>
           增肌面板
         </button>
-        <button class="about-button" @click="showAbout = true">模型来源与许可</button>
+        <button class="about-button" @click="showAbout = true">
+          <el-icon class="button-icon"><InfoFilled /></el-icon>
+          模型来源与许可
+        </button>
       </div>
     </header>
 
@@ -81,8 +88,9 @@ function openExerciseFromHypertrophy(id: string) {
       @close="showHypertrophy = false"
       @select-exercise="openExerciseFromHypertrophy"
     />
-    <AboutLicense v-if="showAbout" @close="showAbout = false" />
-  </div>
+      <AboutLicense v-if="showAbout" @close="showAbout = false" />
+    </div>
+  </el-config-provider>
 </template>
 
 <style scoped>
@@ -182,14 +190,6 @@ function openExerciseFromHypertrophy(id: string) {
   border-color: rgba(255, 107, 90, 0.5);
 }
 
-.pain-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 8px rgba(255, 107, 90, 0.6);
-}
-
 .hyper-button {
   display: flex;
   align-items: center;
@@ -209,15 +209,14 @@ function openExerciseFromHypertrophy(id: string) {
   border-color: rgba(79, 214, 160, 0.5);
 }
 
-.hyper-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 2px;
-  background: currentColor;
-  box-shadow: 0 0 8px rgba(79, 214, 160, 0.6);
+.button-icon {
+  font-size: 14px;
 }
 
 .about-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   border: 1px solid var(--line);
   background: transparent;
   color: var(--muted);

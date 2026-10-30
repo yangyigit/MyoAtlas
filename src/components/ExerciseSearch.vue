@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { Search } from '@element-plus/icons-vue'
+import { ElInput } from 'element-plus'
 import { useAnatomyStore } from '../stores/anatomy'
 import { CATEGORIES } from '../data/exercises'
 import type { ExerciseCategory } from '../data/types'
@@ -21,7 +23,8 @@ function pick(id: string) {
   store.selectExercise(id)
 }
 
-function onKeydown(event: KeyboardEvent) {
+function onKeydown(event: KeyboardEvent | Event) {
+  if (!(event instanceof KeyboardEvent)) return
   if (event.key === 'ArrowDown') {
     event.preventDefault()
     activeIndex.value = Math.min(activeIndex.value + 1, results.value.length - 1)
@@ -36,9 +39,6 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
-function onInput(event: Event) {
-  store.setQuery((event.target as HTMLInputElement).value)
-}
 </script>
 
 <template>
@@ -48,22 +48,16 @@ function onInput(event: Event) {
       <span class="count">{{ results.length }}</span>
     </div>
 
-    <label class="search-field">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="11" cy="11" r="6.5" />
-        <path d="m16 16 4.5 4.5" />
-      </svg>
-      <input
-        :value="store.query"
-        type="search"
-        placeholder="输入动作，如：卧推 / 深蹲 / 划船"
-        autocomplete="off"
-        spellcheck="false"
-        @input="onInput"
-        @keydown="onKeydown"
-      />
-      <button v-if="store.query" class="clear" aria-label="清空搜索" @click="store.setQuery('')">×</button>
-    </label>
+    <el-input
+      class="search-input"
+      :model-value="store.query"
+      size="large"
+      placeholder="输入动作，如：卧推 / 深蹲 / 划船"
+      clearable
+      :prefix-icon="Search"
+      @update:model-value="store.setQuery"
+      @keydown="onKeydown"
+    />
 
     <div class="chips" role="tablist" aria-label="动作分类">
       <button
@@ -140,6 +134,22 @@ function onInput(event: Event) {
   font-size: 12px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+
+.search-input {
+  width: 100%;
+}
+
+.search-input :deep(.el-input__wrapper) {
+  border-radius: 10px;
+  background: rgba(7, 10, 14, 0.7);
+  box-shadow: 0 0 0 1px var(--line) inset;
+  padding: 0 12px;
+}
+
+.search-input :deep(.el-input__inner) {
+  font-size: 13px;
+  height: 42px;
 }
 
 .search-field {

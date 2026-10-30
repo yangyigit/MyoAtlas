@@ -13,6 +13,17 @@ import {
   type TriageLevel,
 } from '../data/pain'
 import type { Exercise } from '../data/types'
+import {
+  ElButton,
+  ElCheckTag,
+  ElInput,
+  ElMessage,
+  ElOption,
+  ElRadioButton,
+  ElRadioGroup,
+  ElSelect,
+  ElSlider,
+} from 'element-plus'
 
 const emit = defineEmits<{ close: []; selectExercise: [id: string] }>()
 
@@ -80,15 +91,37 @@ function switchView(next: 'front' | 'back') {
   selectedId.value = ''
 }
 
+function onViewChange(value: string | number | boolean | undefined) {
+  switchView(value === 'back' ? 'back' : 'front')
+}
+
 function scrollToTriage() {
   nextTick(() => {
-    triageRef.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    const triage = triageRef.value
+    if (!triage) return
+    const container = triage.closest('.pain-content') as HTMLElement | null
+    if (!container) return
+    const top =
+      triage.getBoundingClientRect().top -
+      container.getBoundingClientRect().top +
+      container.scrollTop -
+      70
+    container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
   })
 }
 
 function toggleFlag(key: (typeof flagOptions)[number]['key']) {
   answers.value[key] = !answers.value[key]
   scrollToTriage()
+}
+
+function flagStyle(key: (typeof flagOptions)[number]['key']) {
+  if (!answers.value[key]) return undefined
+  return {
+    background: 'rgba(255, 107, 90, 0.15)',
+    borderColor: 'rgba(255, 107, 90, 0.5)',
+    color: '#ff9b8c',
+  }
 }
 
 function resetAnswers() {
@@ -134,6 +167,7 @@ function saveEntry() {
   diary.value = [entry, ...diary.value].slice(0, MAX_DIARY)
   note.value = ''
   persistDiary()
+  ElMessage.success('已记录到疼痛日记')
 }
 
 function removeEntry(id: string) {
@@ -168,10 +202,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <div class="pain-content">
           <section class="map-panel">
             <div class="map-head">
-              <div class="view-toggle">
-                <button :class="{ active: view === 'front' }" @click="switchView('front')">正面</button>
-                <button :class="{ active: view === 'back' }" @click="switchView('back')">背面</button>
-              </div>
+              <el-radio-group :model-value="view" size="small" @update:model-value="onViewChange">
+                <el-radio-button value="front">正面</el-radio-button>
+                <el-radio-button value="back">背面</el-radio-button>
+              </el-radio-group>
               <span class="map-hint">点击身体区域</span>
             </div>
 
@@ -229,6 +263,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
           <section class="result-panel">
             <template v-if="selectedRegion">
+              <div class="triage-status" :style="{ borderColor: `${triageMeta.color}55` }">
+                <span class="triage-status-dot" :style="{ background: triageMeta.color }" />
+                <strong :style="{ color: triageMeta.color }">{{ triageMeta.label }}</strong>
+                <span>{{ triage.titleZh }}</span>
+              </div>
               <div class="region-head">
                 <h3>{{ selectedRegion.nameZh }}</h3>
                 <span>{{ view === 'front' ? '正面' : '背面' }}</span>
@@ -275,40 +314,37 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
                   <button class="reset" @click="resetAnswers">重置</button>
                 </div>
 
-                <label class="field">
+                <div class="field">
                   <span>疼痛强度 <em>{{ answers.intensity }} / 10</em></span>
-                  <input v-model.number="answers.intensity" type="range" min="0" max="10" step="1" />
-                </label>
+                  <el-slider v-model="answers.intensity" :min="0" :max="10" :step="1" />
+                </div>
 
                 <div class="select-row">
                   <label class="select-field">
                     <span>出现时机</span>
-                    <select v-model="answers.onset">
-                      <option v-for="item in onsetOptions" :key="item.value" :value="item.value">
-                        {{ item.label }}
-                      </option>
-                    </select>
+                    <el-select v-model="answers.onset" size="small">
+                      <el-option v-for="item in onsetOptions" :key="item.value" :label="item.label" :value="item.value" />
+                    </el-select>
                   </label>
                   <label class="select-field">
                     <span>持续时间</span>
-                    <select v-model="answers.duration">
-                      <option v-for="item in durationOptions" :key="item.value" :value="item.value">
-                        {{ item.label }}
-                      </option>
-                    </select>
+                    <el-select v-model="answers.duration" size="small">
+                      <el-option v-for="item in durationOptions" :key="item.value" :label="item.label" :value="item.value" />
+                    </el-select>
                   </label>
                 </div>
 
                 <div class="flags">
-                  <button
+                  <el-check-tag
                     v-for="flag in flagOptions"
                     :key="flag.key"
                     class="flag"
-                    :class="{ active: answers[flag.key] }"
-                    @click="toggleFlag(flag.key)"
+                    :checked="answers[flag.key]"
+                    :style="flagStyle(flag.key)"
+                    @change="toggleFlag(flag.key)"
                   >
                     {{ flag.label }}
-                  </button>
+                  </el-check-tag>
                 </div>
               </div>
 
@@ -330,8 +366,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
                   <span>仅保存在本机</span>
                 </div>
                 <div class="diary-form">
-                  <input v-model="note" type="text" maxlength="60" placeholder="备注：动作、训练量、变化…" />
-                  <button :disabled="!selectedRegion" @click="saveEntry">记录</button>
+                  <el-input v-model="note" size="small" maxlength="60" placeholder="备注：动作、训练量、变化…" />
+                  <el-button type="primary" size="small" :disabled="!selectedRegion" @click="saveEntry">
+                    记录
+                  </el-button>
                 </div>
                 <ul v-if="diary.length" class="diary-list">
                   <li v-for="entry in diary" :key="entry.id">
@@ -339,7 +377,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
                       <strong>{{ entry.regionName }} · {{ entry.intensity }}/10</strong>
                       <span>{{ entry.date }} · {{ entry.note || '无备注' }}</span>
                     </div>
-                    <button class="remove" aria-label="删除记录" @click="removeEntry(entry.id)">×</button>
+                    <el-button
+                      class="remove"
+                      link
+                      type="danger"
+                      size="small"
+                      aria-label="删除记录"
+                      @click="removeEntry(entry.id)"
+                    >
+                      删除
+                    </el-button>
                   </li>
                 </ul>
                 <p v-else class="empty-diary">还没有记录。记录疼痛位置与强度，便于观察变化。</p>
@@ -432,6 +479,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   position: sticky;
   top: 0;
   align-self: start;
+}
+
+.map-head :deep(.el-radio-group) {
+  background: transparent;
 }
 
 .map-head {
@@ -536,6 +587,37 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   display: flex;
   flex-direction: column;
   gap: 18px;
+  position: relative;
+}
+
+.triage-status {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  margin-bottom: -4px;
+  border: 1px solid;
+  border-radius: 8px;
+  background: #0d1118;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.triage-status strong {
+  font-size: 10px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0 5px;
+  line-height: 15px;
+}
+
+.triage-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
 }
 
 .region-head {
@@ -608,6 +690,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 }
 
 .structure-list li {
+  transition: border-color 140ms ease, background 140ms ease;
   display: flex;
   align-items: flex-start;
   gap: 9px;
@@ -693,9 +776,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   color: var(--cyan);
 }
 
-.field input[type='range'] {
-  width: 100%;
-  accent-color: #38d9e8;
+.field :deep(.el-slider) {
+  padding: 0 6px;
 }
 
 .select-row {
@@ -712,14 +794,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   color: var(--muted);
 }
 
-.select-field select {
-  background: #0a0f14;
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 6px 8px;
-  font-size: 11px;
-  outline: none;
+.select-field :deep(.el-select) {
+  width: 100%;
 }
 
 .flags {
@@ -728,20 +804,15 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   gap: 5px;
 }
 
-.flag {
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--muted);
-  border-radius: 999px;
-  padding: 4px 9px;
-  font-size: 10.5px;
-  cursor: pointer;
+.flags :deep(.el-check-tag.is-checked) {
+  background: rgba(255, 107, 90, 0.15);
+  border-color: rgba(255, 107, 90, 0.5);
+  color: #ff9b8c;
 }
 
-.flag.active {
-  border-color: rgba(255, 107, 90, 0.5);
-  background: rgba(255, 107, 90, 0.12);
-  color: #ff8a7a;
+.flag {
+  font-size: 10.5px;
+  border-radius: 999px !important;
 }
 
 .triage {
@@ -816,31 +887,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   gap: 6px;
 }
 
-.diary-form input {
+.diary-form :deep(.el-input) {
   flex: 1;
   min-width: 0;
-  background: #0a0f14;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  color: var(--text);
-  padding: 7px 9px;
-  font-size: 11px;
-  outline: none;
-}
-
-.diary-form button {
-  border: 1px solid rgba(56, 217, 232, 0.3);
-  background: rgba(56, 217, 232, 0.1);
-  color: var(--cyan);
-  border-radius: 7px;
-  padding: 0 13px;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.diary-form button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 .diary-list {
@@ -875,11 +924,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 }
 
 .remove {
-  border: 0;
-  background: transparent;
-  color: var(--faint);
-  cursor: pointer;
-  font-size: 14px;
+  flex: none;
 }
 
 .empty-diary {

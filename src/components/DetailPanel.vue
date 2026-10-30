@@ -4,6 +4,7 @@ import { useAnatomyStore } from '../stores/anatomy'
 import { CATEGORIES } from '../data/exercises'
 import { PALETTE } from '../three/materials'
 import { STRESS_COLORS, STRESS_LABELS } from '../data/knowledge'
+import { ElTooltip } from 'element-plus'
 import type { MuscleRole } from '../data/types'
 
 const store = useAnatomyStore()
@@ -73,14 +74,21 @@ function chooseSubstitution(exerciseId?: string) {
           </span>
         </div>
         <div class="muscle-chips">
-          <span
+          <el-tooltip
             v-for="muscle in row.muscles"
             :key="muscle.id"
-            class="muscle-chip"
-            :style="{ borderColor: `${ROLE_COLORS[row.role]}44`, color: ROLE_COLORS[row.role] }"
+            placement="top"
+            :show-after="200"
+            popper-class="muscle-tooltip"
+            :content="`${muscle.functionZh}${muscle.commonIssueZh ? ` ｜ ${muscle.commonIssueZh}` : ''}`"
           >
-            {{ muscle.nameZh }}
-          </span>
+            <span
+              class="muscle-chip"
+              :style="{ borderColor: `${ROLE_COLORS[row.role]}44`, color: ROLE_COLORS[row.role] }"
+            >
+              {{ muscle.nameZh }}
+            </span>
+          </el-tooltip>
         </div>
       </div>
 

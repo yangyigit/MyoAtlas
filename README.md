@@ -17,7 +17,7 @@ pnpm build      # 类型检查 + 生产构建
 
 ## 技术栈
 
-Vue 3 + TypeScript + Vite + Pinia + Three.js（Draco GLB、PBR/IBL）。
+Vue 3 + TypeScript + Vite + Pinia + Three.js（Draco GLB、PBR/IBL）+ Element Plus（深色主题）。
 
 ## 目录
 
