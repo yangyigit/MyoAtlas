@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import BodyCanvas from '@/components/BodyCanvas.vue'
+import MiniBody3D from '@/components/MiniBody3D.vue'
 import { CATEGORIES, DEFAULT_EXERCISE_ID, EXERCISE_BY_ID, EXERCISES } from '@/data/exercises'
 import { searchExercises } from '@/data/search'
 import { MUSCLE_BY_ID, MUSCLES } from '@/data/muscles'
@@ -44,7 +44,7 @@ definePage({
   type: 'home',
   style: {
     navigationStyle: 'custom',
-    navigationBarTitleText: '肌动图谱',
+    navigationBarTitleText: '肌谱',
     backgroundColor: '#0a0d12',
   },
 })
@@ -58,6 +58,8 @@ const query = ref('')
 const category = ref<ExerciseCategory | 'all'>('all')
 const selectedId = ref(DEFAULT_EXERCISE_ID)
 const bodyView = ref<BodyView>('front')
+const layers = reactive({ muscles: true, bones: false, joints: true })
+const isolate = ref(false)
 const selectedMuscleId = ref<MuscleId | null>(null)
 const showMuscleDetails = ref(false)
 const showRedFlags = ref(false)
@@ -448,8 +450,8 @@ onMounted(onMountedInit)
       <view class="brand">
         <view class="mark">肌</view>
         <view class="brand-text">
-          <text class="title">肌动图谱</text>
-          <text class="subtitle">Kinesis Atlas · Mini</text>
+          <text class="title">肌谱</text>
+          <text class="subtitle">MyoAtlas · Mini</text>
         </view>
       </view>
       <view class="version">轻量版</view>
@@ -462,7 +464,7 @@ onMounted(onMountedInit)
     </view>
 
     <!-- 动作解剖 -->
-    <view v-if="tab === 'anatomy'" class="tab-body">
+    <view v-show="tab === 'anatomy'" class="tab-body">
       <view class="search-row">
         <input
           v-model="query"
@@ -517,19 +519,39 @@ onMounted(onMountedInit)
             <view class="body-head">
               <view>
                 <text class="section-title">肌肉参与</text>
-                <text class="section-sub">2D 示意 · 肌群合并显示</text>
+                <text class="section-sub">3D 解剖 · 拖动旋转 · 双指缩放</text>
               </view>
               <view class="seg">
                 <view class="seg-item" :class="{ active: bodyView === 'front' }" @click="setBodyView('front')">正面</view>
                 <view class="seg-item" :class="{ active: bodyView === 'back' }" @click="setBodyView('back')">背面</view>
               </view>
             </view>
-            <BodyCanvas :exercise="selectedExercise" :view="bodyView" />
+            <MiniBody3D
+              :exercise="selectedExercise"
+              :view="bodyView"
+              :layers="layers"
+              :isolate="isolate"
+              :active="tab === 'anatomy'"
+            />
             <view class="legend">
-              <view class="legend-item"><view class="dot" style="background:#ff5a4e" /><text>主责</text></view>
-              <view class="legend-item"><view class="dot" style="background:#ff9f43" /><text>协同</text></view>
-              <view class="legend-item"><view class="dot" style="background:#ffd166" /><text>稳定</text></view>
-              <view class="legend-item"><view class="dot" style="background:#4a2f2a" /><text>未参与</text></view>
+              <view class="legend-item"><view class="dot" style="background:#e2503f" /><text>主责</text></view>
+              <view class="legend-item"><view class="dot" style="background:#d08644" /><text>协同</text></view>
+              <view class="legend-item"><view class="dot" style="background:#d4b066" /><text>稳定</text></view>
+              <view class="legend-item"><view class="dot" style="background:#4a2c28" /><text>未参与</text></view>
+            </view>
+            <view class="viewer-layers">
+              <view class="layer-chip" :class="{ active: layers.muscles }" @click="layers.muscles = !layers.muscles">
+                <view class="dot" style="background:#7e3a33" /><text>肌肉</text>
+              </view>
+              <view class="layer-chip" :class="{ active: layers.bones }" @click="layers.bones = !layers.bones">
+                <view class="dot" style="background:#d8c8ae" /><text>骨骼</text>
+              </view>
+              <view class="layer-chip" :class="{ active: layers.joints }" @click="layers.joints = !layers.joints">
+                <view class="dot" style="background:#4fd6e0" /><text>关节</text>
+              </view>
+              <view class="layer-chip isolate" :class="{ active: isolate }" @click="isolate = !isolate">
+                <text>仅参与</text>
+              </view>
             </view>
           </view>
         </view>
@@ -670,7 +692,7 @@ onMounted(onMountedInit)
     </view>
 
     <!-- 疼痛排查 -->
-    <view v-else-if="tab === 'pain'" class="tab-body">
+    <view v-if="tab === 'pain'" class="tab-body">
       <view class="card">
         <view class="section-head">
           <text class="section-title">选择疼痛区域</text>
@@ -800,7 +822,7 @@ onMounted(onMountedInit)
     </view>
 
     <!-- 增肌 -->
-    <view v-else class="tab-body">
+    <view v-if="tab === 'hyper'" class="tab-body">
       <view class="card">
         <view class="section-head"><text class="section-title">选择肌群</text><text class="section-sub">动作覆盖与刺激</text></view>
         <picker mode="selector" :range="muscleNames" :value="hyperMuscleIndex" @change="onMusclePickerChange">
@@ -1181,6 +1203,37 @@ onMounted(onMountedInit)
   gap: 5px;
   font-size: 9.5px;
   color: #8b877e;
+}
+
+.viewer-layers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.layer-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(10, 15, 20, 0.75);
+  font-size: 9.5px;
+  color: #8b877e;
+}
+
+.layer-chip.active {
+  color: #dfe6ea;
+  border-color: rgba(56, 217, 232, 0.35);
+  background: rgba(56, 217, 232, 0.1);
+}
+
+.layer-chip.isolate.active {
+  color: #0b1015;
+  background: #38d9e8;
+  border-color: #38d9e8;
 }
 
 .dot {

@@ -30,12 +30,14 @@ curl -L -o Joints100.fbx "$BASE/Joints100.fbx"
 
 产物写入 `public/models/`：
 
-- `muscles.glb`（41 个肌群节点，约 300k 三角面）
-- `bones.glb`（20 个骨骼节点，约 150k 三角面）
-- `joints.glb`（11 个关节/韧带节点，约 80k 三角面；肩胛胸壁为伪关节，无网格，仅前端 gizmo）
-- `soft-tissue.glb`（肌腱与支持带单节点 `soft__tissue`，约 23k 三角面）
+- `muscles.glb`（41 个肌群节点，约 81 万三角面）
+- `bones.glb`（20 个骨骼节点，约 39 万三角面）
+- `joints.glb`（11 个关节/韧带节点，约 17 万三角面；肩胛胸壁为伪关节，无网格，仅前端 gizmo）
+- `soft-tissue.glb`（肌腱与支持带单节点 `soft__tissue`，约 2.6 万三角面）
 - `manifest.json`（节点、三角面、包围盒）
 - `LICENSE.txt`
+
+高模目标在脚本的 `TARGET_TRIS` 中设置（muscles 800k / bones 350k / joints 200k / connective 140k），Draco 压缩后总计约 4.2MB。
 
 ## 规则
 
@@ -49,6 +51,24 @@ curl -L -o Joints100.fbx "$BASE/Joints100.fbx"
 - 每层统一按目标三角面数设置 Decimate 比例
 
 修改 `groups.json` 后重跑构建，`manifest.json` 与 GLB 会同步更新。
+
+## 小程序 3D 模型
+
+`export_mini_glb.py` 将四个 Web GLB 合并、按 52k 面减面、统一材质并导出为小程序使用的无 Draco 模型：
+
+```bash
+/Applications/Blender.app/Contents/MacOS/Blender \
+  -b --factory-startup \
+  --python tools/anatomy-build/export_mini_glb.py
+
+npx --yes @gltf-transform/cli@4 quantize \
+  miniapp/src/static/models/anatomy-mini.glb \
+  /tmp/anatomy-mini.glb \
+  --quantize-position 14 --quantize-normal 10 --quantize-texcoord 8
+mv /tmp/anatomy-mini.glb miniapp/src/static/models/anatomy-mini.glb
+```
+
+产物约 875KB（含 `KHR_mesh_quantization`），three-platformize 的 GLTFLoader 可直接解析。节点名保持 `muscle__<id>`、`bone__<id>`、`joint__<id>`、`soft__tissue`，前端按前缀映射图层。
 
 ## 许可
 

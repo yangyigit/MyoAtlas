@@ -228,7 +228,13 @@ describe('exercise search', () => {
     expect(searchExercises('不存在的动作')).toEqual([])
   })
 
-  it('returns all 31 movements for an empty query', () => {
-    expect(searchExercises('').length).toBe(31)
+  it('finds machine exercises by Chinese alias', () => {
+    expect(searchExercises('蝴蝶机')[0]?.id).toBe('pec-deck')
+    expect(searchExercises('哈克')[0]?.id).toBe('hack-squat')
+    expect(searchExercises('臀推')[0]?.id).toBe('hip-thrust')
+  })
+
+  it('returns all 51 movements for an empty query', () => {
+    expect(searchExercises('').length).toBe(51)
   })
 })

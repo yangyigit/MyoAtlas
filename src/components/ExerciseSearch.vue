@@ -7,6 +7,7 @@ import { CATEGORIES } from '../data/exercises'
 import type { ExerciseCategory } from '../data/types'
 
 const store = useAnatomyStore()
+const emit = defineEmits<{ select: [id: string] }>()
 const activeIndex = ref(0)
 
 const results = computed(() => store.results)
@@ -21,6 +22,7 @@ watch(results, () => {
 
 function pick(id: string) {
   store.selectExercise(id)
+  emit('select', id)
 }
 
 function onKeydown(event: KeyboardEvent | Event) {

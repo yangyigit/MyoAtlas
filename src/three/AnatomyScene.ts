@@ -104,6 +104,7 @@ export class AnatomyScene {
   private layers: Record<LayerName, boolean> = { muscles: true, bones: true, joints: true }
   private isolate = false
   private cameraAnimation: CameraAnimation | null = null
+  private viewScale = 1
   private hoveredMesh: THREE.Mesh | null = null
   private lastHoverCheck = 0
   private frameId = 0
@@ -430,8 +431,13 @@ export class AnatomyScene {
   }
 
   focus(view: ExerciseView) {
-    const toPosition = new THREE.Vector3(...view.camera)
+    const scale = this.aspectScale(this.camera.aspect)
+    this.viewScale = scale
     const toTarget = new THREE.Vector3(...view.target)
+    const toPosition = new THREE.Vector3(...view.camera)
+      .sub(toTarget)
+      .multiplyScalar(scale)
+      .add(toTarget)
     const toFov = view.fov ?? 35
 
     if (this.reducedMotion) {
@@ -453,6 +459,10 @@ export class AnatomyScene {
       start: performance.now(),
       duration: 900,
     }
+  }
+
+  private aspectScale(aspect: number) {
+    return aspect < 0.9 ? Math.min(1.7, 0.9 / Math.max(aspect, 0.36)) : 1
   }
 
   resetView() {
@@ -540,6 +550,16 @@ export class AnatomyScene {
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(width, height)
     this.labelRenderer.setSize(width, height)
+
+    const scale = this.aspectScale(this.camera.aspect)
+    if (this.controls && Math.abs(scale - this.viewScale) > 0.001) {
+      this.cameraAnimation = null
+      const offset = this.camera.position.clone().sub(this.controls.target)
+      offset.multiplyScalar(scale / this.viewScale)
+      this.camera.position.copy(this.controls.target).add(offset)
+      this.viewScale = scale
+      this.controls.update()
+    }
   }
 
   private updateCamera(now: number) {

@@ -88,7 +88,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '肱二头肌长头腱', type: '肌腱', noteZh: '肩前侧疼痛常需要评估长头腱。', muscleId: 'biceps-brachii' },
       { nameZh: '肩锁关节', type: '关节', noteZh: '推举/飞鸟末端或肩部撞击后可能受压。', jointId: 'acromioclavicular' },
     ],
-    exerciseIds: ['overhead-press', 'lateral-raise', 'barbell-bench-press', 'dips', 'face-pull'],
+    exerciseIds: ['overhead-press', 'lateral-raise', 'barbell-bench-press', 'dips', 'face-pull', 'machine-shoulder-press', 'cable-lateral-raise', 'reverse-pec-deck'],
     adviceZh: '先减少过顶与深度外展范围，检查肩胛上回旋与后缩控制；肩前侧疼痛持续时就医评估肩袖。',
   },
   {
@@ -101,7 +101,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '胸小肌', type: '肌肉', noteZh: '过度紧张可能限制肩胛后倾。', muscleId: 'pectoralis-minor' },
       { nameZh: '胸骨 / 肋骨', type: '骨骼', noteZh: '胸骨或肋骨疼痛需与内脏/呼吸相关症状区分。', boneId: 'sternum' },
     ],
-    exerciseIds: ['barbell-bench-press', 'dumbbell-fly', 'push-up', 'dips'],
+    exerciseIds: ['barbell-bench-press', 'dumbbell-fly', 'push-up', 'dips', 'machine-chest-press', 'pec-deck', 'cable-crossover'],
     adviceZh: '减少卧推/飞鸟末端过深范围，保持肩胛后缩下沉；胸痛伴气短、心悸等全身症状时立即就医。',
   },
   {
@@ -114,7 +114,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '前臂屈肌群起点（肘内侧）', type: '肌腱', noteZh: '反复屈腕/握力与拉类动作相关。', muscleId: 'forearm-flexors' },
       { nameZh: '肱二头肌 / 肱三头肌肌腱', type: '肌腱', noteZh: '肘前/后侧肌腱在弯举与臂屈伸中负荷。', muscleId: 'biceps-brachii' },
     ],
-    exerciseIds: ['barbell-curl', 'hammer-curl', 'barbell-row', 'cable-triceps-pushdown', 'close-grip-bench-press'],
+    exerciseIds: ['barbell-curl', 'hammer-curl', 'barbell-row', 'cable-triceps-pushdown', 'close-grip-bench-press', 'cable-curl', 'preacher-curl', 'skull-crusher'],
     adviceZh: '减少握力与腕部代偿，改用中立握/绳索；肘部持续肿痛或卡锁时就医。',
   },
   {
@@ -127,7 +127,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '前臂屈肌群', type: '肌肉', noteZh: '握力与腕屈曲。', muscleId: 'forearm-flexors' },
       { nameZh: '前臂伸肌群', type: '肌肉', noteZh: '腕伸展与稳定。', muscleId: 'forearm-extensors' },
     ],
-    exerciseIds: ['push-up', 'barbell-bench-press', 'barbell-curl', 'close-grip-bench-press'],
+    exerciseIds: ['push-up', 'barbell-bench-press', 'barbell-curl', 'close-grip-bench-press', 'cable-curl', 'preacher-curl'],
     adviceZh: '保持腕中立位，必要时用握把/护腕；麻木、刺痛或握力明显下降时就医。',
   },
   {
@@ -140,7 +140,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '腹斜肌', type: '肌肉', noteZh: '旋转/侧屈；俄罗斯转体负荷较高。', muscleId: 'external-oblique' },
       { nameZh: '腹横肌', type: '肌肉', noteZh: '腹压与腰椎稳定。', muscleId: 'transversus-abdominis' },
     ],
-    exerciseIds: ['crunch', 'plank', 'hanging-leg-raise', 'russian-twist'],
+    exerciseIds: ['crunch', 'plank', 'hanging-leg-raise', 'russian-twist', 'pallof-press', 'cable-woodchop', 'ab-wheel'],
     adviceZh: '区分训练后酸痛与锐痛/持续痛；腹痛伴恶心、发热或局部包块时就医。',
   },
   {
@@ -153,7 +153,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '内收肌群', type: '肌肉', noteZh: '深蹲/弓步中内收肌拉伤风险。', muscleId: 'adductors' },
       { nameZh: '髋关节', type: '关节', noteZh: '深屈曲+内旋可能增加髋臼撞击相关压力。', jointId: 'hip' },
     ],
-    exerciseIds: ['back-squat', 'lunge', 'deadlift', 'romanian-deadlift', 'leg-press'],
+    exerciseIds: ['back-squat', 'lunge', 'deadlift', 'romanian-deadlift', 'leg-press', 'hip-thrust', 'hip-abduction', 'hack-squat'],
     adviceZh: '减少过深髋屈曲与内旋，先控制髋外展/骨盆稳定；腹股沟持续痛或卡顿时就医。',
   },
   {
@@ -166,7 +166,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '股直肌', type: '肌肉', noteZh: '跨髋膝双关节，髋屈曲/膝伸展都参与。', muscleId: 'quadriceps' },
       { nameZh: '髂腰肌', type: '肌肉', noteZh: '髋屈曲，可能参与大腿前侧牵拉感。', muscleId: 'iliopsoas' },
     ],
-    exerciseIds: ['back-squat', 'lunge', 'leg-press', 'leg-curl'],
+    exerciseIds: ['back-squat', 'lunge', 'leg-press', 'leg-curl', 'leg-extension', 'hack-squat', 'hip-thrust'],
     adviceZh: '区分肌肉酸痛与拉伤；突发撕裂感、肿胀或明显无力时停止训练并就医。',
   },
   {
@@ -179,7 +179,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '股四头肌 / 髌腱', type: '肌腱', noteZh: '跳跃、深蹲与腿举中髌腱负荷高。', muscleId: 'quadriceps' },
       { nameZh: '鹅足 / 内侧结构', type: '肌腱', noteZh: '膝内侧疼痛需要结合内收肌与腘绳肌评估。' },
     ],
-    exerciseIds: ['back-squat', 'lunge', 'leg-press', 'leg-curl'],
+    exerciseIds: ['back-squat', 'lunge', 'leg-press', 'leg-curl', 'leg-extension', 'hack-squat', 'hip-thrust'],
     adviceZh: '先减小深蹲深度/负荷，确保膝盖对齐脚尖；肿胀、交锁、打软腿时尽快就医。',
   },
   {
@@ -193,7 +193,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '跟腱', type: '肌腱', noteZh: '跖屈末端负荷；晨起僵硬/压痛需评估。', muscleId: 'soleus' },
       { nameZh: '踝关节', type: '关节', noteZh: '背屈/跖屈与稳定；扭伤后常见。', jointId: 'ankle' },
     ],
-    exerciseIds: ['calf-raise', 'lunge', 'back-squat'],
+    exerciseIds: ['calf-raise', 'lunge', 'back-squat', 'seated-calf-raise', 'hack-squat'],
     adviceZh: '减少弹震与突然增加跑跳/提踵量；明显肿胀、无法负重或跟腱突发锐痛时就医。',
   },
   {
@@ -206,7 +206,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '斜方肌中/下束', type: '肌肉', noteZh: '肩胛后缩/下压与上回旋。', muscleId: 'trapezius-mid' },
       { nameZh: '肩胛骨', type: '骨骼', noteZh: '肩胛运动异常可能与肩部疼痛相关。', boneId: 'scapula' },
     ],
-    exerciseIds: ['barbell-row', 'seated-cable-row', 'lat-pulldown', 'pull-up', 'face-pull'],
+    exerciseIds: ['barbell-row', 'seated-cable-row', 'lat-pulldown', 'pull-up', 'face-pull', 'chest-supported-row', 't-bar-row', 'machine-high-row'],
     adviceZh: '先降低拉类重量与耸肩，练习肩胛后缩/下压；伴随上肢麻木或无力时就医。',
   },
   {
@@ -219,7 +219,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '腰椎', type: '关节', noteZh: '屈曲+剪切+旋转组合负荷较高。', jointId: 'lumbar-spine' },
       { nameZh: '腰方肌', type: '肌肉', noteZh: '侧屈/骨盆稳定；单侧负荷可能紧张。' },
     ],
-    exerciseIds: ['deadlift', 'romanian-deadlift', 'back-squat', 'barbell-row'],
+    exerciseIds: ['deadlift', 'romanian-deadlift', 'back-squat', 'barbell-row', 't-bar-row'],
     adviceZh: '先减重量/减少屈曲与旋转，保持脊柱中立；伴随下肢放射痛、麻木或大小便异常时立即就医。',
   },
   {
@@ -232,7 +232,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '臀中肌', type: '肌肉', noteZh: '髋外展/骨盆稳定；单腿动作相关。', muscleId: 'gluteus-medius' },
       { nameZh: '骶髂关节', type: '关节', noteZh: '骨盆环负荷；单腿/旋转动作中稳定要求高。', jointId: 'sacroiliac' },
     ],
-    exerciseIds: ['deadlift', 'romanian-deadlift', 'back-squat', 'lunge', 'leg-press'],
+    exerciseIds: ['deadlift', 'romanian-deadlift', 'back-squat', 'lunge', 'leg-press', 'hip-thrust', 'hip-abduction', 'hack-squat'],
     adviceZh: '先降低髋铰链/单腿负荷，改善臀中肌控制；夜间痛、发热或明显跛行时就医。',
   },
   {
@@ -244,7 +244,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '腘绳肌', type: '肌肉', noteZh: '髋伸展/膝屈曲；RDL 拉伸位负荷高。', muscleId: 'hamstrings' },
       { nameZh: '坐骨结节 / 腘绳肌腱', type: '肌腱', noteZh: '髋铰链与冲刺中常见拉伤区域。', muscleId: 'hamstrings' },
     ],
-    exerciseIds: ['romanian-deadlift', 'leg-curl', 'deadlift', 'lunge'],
+    exerciseIds: ['romanian-deadlift', 'leg-curl', 'deadlift', 'lunge', 'hip-thrust'],
     adviceZh: '减少突然加速/大重量拉伸，先控制离心；突发撕裂感或淤青时停止训练并就医。',
   },
   {
@@ -256,7 +256,7 @@ export const PAIN_REGIONS: PainRegion[] = [
       { nameZh: '腓肠肌 / 比目鱼肌', type: '肌肉', noteZh: '踝跖屈；提踵与跳跃负荷高。', muscleId: 'gastrocnemius' },
       { nameZh: '跟腱', type: '肌腱', noteZh: '提踵末端与弹震负荷；跟腱问题常见。', muscleId: 'soleus' },
     ],
-    exerciseIds: ['calf-raise', 'lunge', 'back-squat'],
+    exerciseIds: ['calf-raise', 'lunge', 'back-squat', 'seated-calf-raise', 'hack-squat'],
     adviceZh: '减少弹震与突然增加提踵量；跟腱突发锐痛、无法踮脚或明显肿胀时就医。',
   },
 ]

@@ -31,7 +31,7 @@ SOURCES = {
     "joints": ("Joints100.fbx", FBX_BASE + "Joints100.fbx"),
 }
 PREFIX = {"muscles": "muscle", "bones": "bone", "joints": "joint"}
-TARGET_TRIS = {"muscles": 300_000, "bones": 150_000, "joints": 80_000, "connective": 90_000}
+TARGET_TRIS = {"muscles": 800_000, "bones": 350_000, "joints": 200_000, "connective": 140_000}
 
 MAT_COLORS = {
     "muscles": (0.42, 0.18, 0.15, 1.0),

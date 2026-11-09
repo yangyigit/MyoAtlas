@@ -41,8 +41,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         </ul>
 
         <p class="license-note">
-          本应用中的衍生 3D 资源（GLB）同样以 CC BY-SA 4.0 许可发布。动作与肌肉映射参考通用运动解剖学资料，
-          仅用于学习与演示，不构成医疗建议。
+          本应用中的衍生 3D 资源（GLB）同样以 CC BY-SA 4.0 许可发布。Web 端当前使用约 140 万面的高模版本，
+          小程序使用 52k 面低模。界面结构参考了 Human Atlas（MIT）的全屏解剖浏览布局，但未使用其 3D 数据；
+          动作与肌肉映射参考通用运动解剖学资料，仅用于学习与演示，不构成医疗建议。
         </p>
 
         <footer>

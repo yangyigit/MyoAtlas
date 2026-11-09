@@ -84,6 +84,9 @@ importers:
       pinia-plugin-persistedstate:
         specifier: 3.2.1
         version: 3.2.1(pinia@2.0.36(typescript@5.8.3)(vue@3.4.21(typescript@5.8.3)))
+      three-platformize:
+        specifier: ^1.133.3
+        version: 1.133.3
       vite-plugin-define-types-dts:
         specifier: ^1.0.3
         version: 1.0.3(vite@5.2.8(@types/node@20.19.11)(less@4.5.1)(sass@1.77.8)(terser@5.43.1))
@@ -3179,6 +3182,9 @@ packages:
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
+
+  '@types/three@0.133.1':
+    resolution: {integrity: sha512-XqBrP/+kbs+o0CYRhCVVE95v7FaL2bO5Z7+3VQJE0nEyjo+9LoLfeNgZITOnndKHxM+7ltEciAIR7uE0SZlsOg==}
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
@@ -8927,6 +8933,9 @@ packages:
     resolution: {integrity: sha512-te/NtwBwfiNRLf9Ijqx3T0nlqZiQ2XrrtBvu+cLL8ZRrGkO0NHTug8MYFKyoSrv/sHTaSKfilUkizV6XhxMJ3g==}
     engines: {node: '>=8'}
 
+  three-platformize@1.133.3:
+    resolution: {integrity: sha512-fb7lxtMU/ZSX+JZBrpZVJhK0yYc+ozcLAqEhqXXngrZWrSYUHyOeMpS9vfkmFVr+Jx2nzvvGxrf0OcGzY8Y4vA==}
+
   throat@6.0.2:
     resolution: {integrity: sha512-WKexMoJj3vEuK0yFEapj8y64V0A6xcuPuK9Gt1d0R+dzCSJc0lHqQytAbSB4cDAK0dWh4T0E2ETkoLE2WZ41OQ==}
 
@@ -14259,6 +14268,8 @@ snapshots:
   '@types/retry@0.12.5': {}
 
   '@types/stack-utils@2.0.3': {}
+
+  '@types/three@0.133.1': {}
 
   '@types/unist@3.0.3': {}
 
@@ -21432,6 +21443,10 @@ snapshots:
       minimatch: 3.1.2
 
   text-extensions@2.4.0: {}
+
+  three-platformize@1.133.3:
+    dependencies:
+      '@types/three': 0.133.1
 
   throat@6.0.2: {}
 
