@@ -26,6 +26,8 @@ export const useAnatomyStore = defineStore('anatomy', () => {
   const autoFocus = ref(true)
   const sagittalPlane = ref(false)
   const coronalPlane = ref(false)
+  const guideLines = ref(false)
+  const focusedMuscleId = ref<string | null>(null)
   const status = ref<LoadStatus>('idle')
   const progress = ref(0)
   const errorMessage = ref<string | null>(null)
@@ -83,7 +85,10 @@ export const useAnatomyStore = defineStore('anatomy', () => {
   const redFlags = computed(() => GLOBAL_RED_FLAGS)
 
   function selectExercise(id: string) {
-    if (EXERCISE_BY_ID[id]) selectedExerciseId.value = id
+    if (EXERCISE_BY_ID[id]) {
+      selectedExerciseId.value = id
+      focusedMuscleId.value = null
+    }
   }
 
   function setQuery(value: string) {
@@ -111,6 +116,15 @@ export const useAnatomyStore = defineStore('anatomy', () => {
 
   function toggleAutoFocus() {
     autoFocus.value = !autoFocus.value
+  }
+
+  function toggleGuideLines() {
+    guideLines.value = !guideLines.value
+    if (!guideLines.value) focusedMuscleId.value = null
+  }
+
+  function toggleFocusedMuscle(id: string) {
+    focusedMuscleId.value = focusedMuscleId.value === id ? null : id
   }
 
   function setStatus(value: LoadStatus) {
@@ -142,6 +156,8 @@ export const useAnatomyStore = defineStore('anatomy', () => {
     autoFocus,
     sagittalPlane,
     coronalPlane,
+    guideLines,
+    focusedMuscleId,
     status,
     progress,
     errorMessage,
@@ -159,6 +175,8 @@ export const useAnatomyStore = defineStore('anatomy', () => {
     toggleIsolate,
     togglePlane,
     toggleAutoFocus,
+    toggleGuideLines,
+    toggleFocusedMuscle,
     setStatus,
     setProgress,
     setError,

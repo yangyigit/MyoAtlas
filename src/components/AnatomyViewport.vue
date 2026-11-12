@@ -33,7 +33,64 @@ function syncScene(focus = store.autoFocus) {
   scene.setExercise(store.selectedExercise)
   scene.setLayers({ ...store.layers })
   scene.setIsolate(store.isolateActive)
+  scene.setGuideLines(store.guideLines)
+  scene.setFocusedMuscle(store.focusedMuscleId)
+  syncGuideInsets()
   if (focus) scene.focus(store.selectedExercise.view)
+}
+
+/** 计算侧边面板/顶部按钮/底部工具栏占位，避免引导线标签被遮挡 */
+function syncGuideInsets() {
+  if (!scene || !host.value) return
+  const rect = host.value.getBoundingClientRect()
+  if (!rect.width || !rect.height) return
+
+  const overlapX = (r: DOMRect) => Math.min(rect.right, r.right) - Math.max(rect.left, r.left)
+  const overlapY = (r: DOMRect) => Math.min(rect.bottom, r.bottom) - Math.max(rect.top, r.top)
+
+  const measure = (selector: string, dir: 'left' | 'right') => {
+    const el = document.querySelector<HTMLElement>(selector)
+    if (!el) return 0
+    const r = el.getBoundingClientRect()
+    if (r.width < 2 || r.height < 2 || overlapY(r) <= 0) return 0
+    const half = rect.left + rect.width * 0.5
+    if (dir === 'left') return r.left < half ? Math.max(0, overlapX(r) + 16) : 0
+    return r.left >= half ? Math.max(0, overlapX(r) + 16) : 0
+  }
+
+  const dockTop = (() => {
+    const el = document.querySelector<HTMLElement>('.bottom-dock')
+    if (!el) return 0
+    const r = el.getBoundingClientRect()
+    if (r.height < 2 || overlapX(r) <= 0) return 0
+    return Math.max(0, rect.bottom - r.top + 10)
+  })()
+
+  const topBar = (() => {
+    const el = document.querySelector<HTMLElement>('.top-actions')
+    if (!el) return 0
+    const r = el.getBoundingClientRect()
+    if (r.height < 2 || overlapX(r) <= 0) return 0
+    return Math.max(0, r.bottom - rect.top + 10)
+  })()
+
+  scene.setGuideInsets({
+    left: measure('.panel.sidebar', 'left'),
+    right: measure('.panel.details', 'right'),
+    top: Math.max(64, topBar),
+    bottom: Math.max(36, dockTop),
+  })
+}
+
+let insetTimer: ReturnType<typeof setInterval> | null = null
+
+function syncInsetTimer() {
+  if (store.guideLines && !insetTimer) {
+    insetTimer = setInterval(syncGuideInsets, 400)
+  } else if (!store.guideLines && insetTimer) {
+    clearInterval(insetTimer)
+    insetTimer = null
+  }
 }
 
 function createScene() {
@@ -50,9 +107,11 @@ function createScene() {
       onReady: () => {
         store.setStatus('ready')
         syncScene(store.autoFocus)
+        syncInsetTimer()
       },
       onError: (message) => store.setError(message || '模型加载失败'),
       onHover: handleHover,
+      onMuscleSelect: (muscleId) => store.toggleFocusedMuscle(muscleId),
     })
     void scene.load()
   } catch {
@@ -68,6 +127,10 @@ defineExpose({ resetView })
 
 onMounted(createScene)
 onBeforeUnmount(() => {
+  if (insetTimer) {
+    clearInterval(insetTimer)
+    insetTimer = null
+  }
   scene?.dispose()
   scene = null
 })
@@ -84,6 +147,18 @@ watch(
 watch(
   () => store.isolateActive,
   (value) => scene?.setIsolate(value),
+)
+watch(
+  () => store.guideLines,
+  (value) => {
+    scene?.setGuideLines(value)
+    syncGuideInsets()
+    syncInsetTimer()
+  },
+)
+watch(
+  () => store.focusedMuscleId,
+  (value) => scene?.setFocusedMuscle(value),
 )
 watch(
   [() => store.sagittalPlane, () => store.coronalPlane],

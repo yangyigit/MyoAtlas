@@ -36,6 +36,16 @@ const items: { id: LayerName; label: string; color: string }[] = [
     </button>
     <span class="divider" />
     <button
+      class="layer-toggle guide-toggle"
+      :class="{ on: store.guideLines }"
+      :aria-pressed="store.guideLines"
+      @click="store.toggleGuideLines()"
+    >
+      <i class="guide-icon" />
+      <span>肌肉引导线</span>
+    </button>
+    <span class="divider" />
+    <button
       class="layer-toggle plane-toggle"
       :class="{ on: store.sagittalPlane }"
       :aria-pressed="store.sagittalPlane"
@@ -116,6 +126,42 @@ const items: { id: LayerName; label: string; color: string }[] = [
 .plane-toggle.on {
   background: rgba(56, 217, 232, 0.1);
   color: var(--cyan);
+}
+
+.guide-toggle.on {
+  background: rgba(255, 138, 120, 0.12);
+  color: #ff9a86;
+}
+
+.guide-icon {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  flex: none;
+  margin-right: 2px;
+}
+
+.guide-icon::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 3px;
+  width: 5px;
+  height: 1px;
+  background: currentColor;
+}
+
+.guide-icon::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 3px;
+  width: 2px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.55;
 }
 
 .plane-toggle.coronal.on {

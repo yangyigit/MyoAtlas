@@ -18,6 +18,8 @@ import {
   setActiveJoint,
   setBase,
   setDim,
+  setFocused,
+  setMuted,
   setRole,
   updateAnatomyMaterial,
   type AnatomyMaterial,
@@ -35,6 +37,8 @@ export interface SceneCallbacks {
   onReady?: () => void
   onError?: (message: string) => void
   onHover?: (hover: SceneHover | null) => void
+  /** 点击引导线卡片选中某块肌肉 */
+  onMuscleSelect?: (muscleId: string, nameZh: string) => void
 }
 
 interface MeshEntry {
@@ -57,6 +61,33 @@ interface CameraAnimation {
   duration: number
 }
 
+interface GuideItem {
+  mesh: THREE.Mesh
+  anchor: THREE.Vector3
+  el: HTMLButtonElement
+  path: SVGPathElement
+  dot: SVGCircleElement
+  width: number
+  height: number
+  x: number
+  y: number
+  side: -1 | 1
+  onScreen: boolean
+  occluded: boolean
+  hot: boolean
+  behind: boolean
+  active: boolean
+  pathD: string
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg'
+
+const ROLE_LABEL: Record<MuscleRole, string> = {
+  primary: '主责',
+  secondary: '协同',
+  stabilizer: '稳定',
+}
+
 const DEFAULT_VIEW: ExerciseView = {
   camera: [1.15, 1.05, 2.75],
   target: [0, 0.92, 0],
@@ -74,6 +105,20 @@ export class AnatomyScene {
   private readonly callbacks: SceneCallbacks
   private readonly renderer: THREE.WebGLRenderer
   private readonly labelRenderer: CSS2DRenderer
+  private readonly guideLayer: HTMLDivElement
+  private readonly guideSvg: SVGSVGElement
+  private guideItems: GuideItem[] = []
+  private guideEnabled = false
+  private focusedMuscleId: string | null = null
+  private focusedMesh: THREE.Mesh | null = null
+  private guideBounds = { left: 0, right: 0 }
+  private readonly sampleCache = new Map<THREE.Mesh, THREE.Vector3[]>()
+  private guideInsets = { left: 0, right: 0, top: 78, bottom: 36 }
+  private guidesDirty = true
+  private lastAnchorUpdate = 0
+  private lastGuideMeasure = 0
+  private readonly lastGuideCameraPos = new THREE.Vector3()
+  private readonly lastGuideCameraQuat = new THREE.Quaternion()
   private readonly scene = new THREE.Scene()
   private readonly camera: THREE.PerspectiveCamera
   private readonly controls: OrbitControls
@@ -130,6 +175,15 @@ export class AnatomyScene {
     this.labelRenderer = new CSS2DRenderer()
     this.labelRenderer.domElement.className = 'anatomy-labels'
     container.appendChild(this.labelRenderer.domElement)
+
+    this.guideLayer = document.createElement('div')
+    this.guideLayer.className = 'guide-overlay'
+    this.guideLayer.style.display = 'none'
+    this.guideSvg = document.createElementNS(SVG_NS, 'svg') as SVGSVGElement
+    this.guideSvg.setAttribute('class', 'guide-lines')
+    this.guideSvg.setAttribute('preserveAspectRatio', 'none')
+    this.guideLayer.appendChild(this.guideSvg)
+    container.appendChild(this.guideLayer)
 
     this.camera = new THREE.PerspectiveCamera(35, 1, 0.01, 30)
     this.camera.position.set(...DEFAULT_VIEW.camera)
@@ -379,6 +433,11 @@ export class AnatomyScene {
   }
 
   private applyState() {
+    this.refreshMaterials()
+    if (this.guideEnabled) this.rebuildGuides()
+  }
+
+  private refreshMaterials() {
     const reveal = this.layers.bones || this.layers.joints
     const exercise = this.exercise
 
@@ -394,6 +453,7 @@ export class AnatomyScene {
     const roleMap = new Map<string, MuscleRole>(exercise.muscles.map((m) => [m.id, m.role]))
     const boneSet = new Set<string>(exercise.bones)
     const jointSet = new Set<string>(exercise.joints.map((j) => j.id))
+    const focused = this.focusedMuscleId
 
     for (const entry of this.meshEntries) {
       let active = false
@@ -402,6 +462,10 @@ export class AnatomyScene {
         active = Boolean(role)
         if (role) setRole(entry.state, role)
         else setDim(entry.state, 'muscles', reveal)
+        if (focused && active) {
+          if (entry.groupId === focused) setFocused(entry.state)
+          else setMuted(entry.state)
+        }
       } else if (entry.layer === 'bones') {
         active = boneSet.has(entry.groupId)
         if (active) setActiveBone(entry.state)
@@ -416,6 +480,16 @@ export class AnatomyScene {
     for (const mesh of this.softMeshes) mesh.visible = !this.isolate
   }
 
+  /** 聚焦某块肌肉（传 null 取消） */
+  setFocusedMuscle(muscleId: string | null) {
+    if (muscleId === this.focusedMuscleId) return
+    this.focusedMuscleId = muscleId
+    this.focusedMesh =
+      this.meshEntries.find((entry) => entry.layer === 'muscles' && entry.groupId === muscleId)
+        ?.mesh ?? null
+    this.refreshMaterials()
+  }
+
   setLayers(layers: Record<LayerName, boolean>) {
     this.layers = { ...layers }
     for (const layer of Object.keys(this.layerRoots) as LayerName[]) {
@@ -428,6 +502,338 @@ export class AnatomyScene {
   setIsolate(value: boolean) {
     this.isolate = value
     this.applyState()
+  }
+
+  setGuideLines(value: boolean) {
+    if (this.guideEnabled === value) return
+    this.guideEnabled = value
+    this.guideLayer.style.display = value ? '' : 'none'
+    if (value) {
+      this.rebuildGuides()
+      this.guidesDirty = true
+    } else {
+      this.clearGuides()
+    }
+  }
+
+  private clearGuides() {
+    for (const item of this.guideItems) {
+      item.el.remove()
+      item.path.remove()
+      item.dot.remove()
+    }
+    this.guideItems = []
+  }
+
+  private rebuildGuides() {
+    this.clearGuides()
+    const exercise = this.exercise
+    if (!this.guideEnabled || !exercise || !this.layers.muscles) return
+
+    const roleMap = new Map<string, MuscleRole>(exercise.muscles.map((m) => [m.id, m.role]))
+    const entries = this.meshEntries.filter(
+      (entry) => entry.layer === 'muscles' && roleMap.has(entry.groupId),
+    )
+    const height = this.container.clientHeight || 600
+    this.scene.updateMatrixWorld()
+
+    for (const entry of entries) {
+      const role = roleMap.get(entry.groupId) as MuscleRole
+
+      const el = document.createElement('button')
+      el.type = 'button'
+      el.className = `guide-label ${role}`
+      el.setAttribute('aria-pressed', 'false')
+      el.title = `点击聚焦：${entry.nameZh}`
+      el.style.opacity = '0'
+      const name = document.createElement('span')
+      name.textContent = entry.nameZh
+      const badge = document.createElement('b')
+      badge.textContent = ROLE_LABEL[role]
+      el.append(name, badge)
+      el.addEventListener('click', () => {
+        this.callbacks.onMuscleSelect?.(entry.groupId, entry.nameZh)
+      })
+      this.guideLayer.appendChild(el)
+
+      const path = document.createElementNS(SVG_NS, 'path') as SVGPathElement
+      path.setAttribute('class', `guide-line ${role}`)
+      const dot = document.createElementNS(SVG_NS, 'circle') as SVGCircleElement
+      dot.setAttribute('class', `guide-dot ${role}`)
+      dot.setAttribute('r', '2.6')
+      this.guideSvg.appendChild(path)
+      this.guideSvg.appendChild(dot)
+
+      this.guideItems.push({
+        mesh: entry.mesh,
+        anchor: new THREE.Vector3(),
+        el,
+        path,
+        dot,
+        width: el.offsetWidth,
+        height: el.offsetHeight,
+        x: 0,
+        y: height / 2,
+        side: -1,
+        onScreen: false,
+        occluded: false,
+        hot: false,
+        behind: false,
+        active: false,
+        pathD: '',
+      })
+    }
+
+    this.guideSvg.setAttribute('width', String(this.container.clientWidth || 1))
+    this.guideSvg.setAttribute('height', String(height))
+    const half = (this.container.clientWidth || 1) / 2
+    this.guideBounds = { left: half - 60, right: half + 60 }
+    this.guidesDirty = true
+  }
+
+  /** 每块肌肉的世界坐标顶点采样：用于挑选面向相机的锚点与估算屏幕轮廓 */
+  private samplesFor(mesh: THREE.Mesh) {
+    const cached = this.sampleCache.get(mesh)
+    if (cached) return cached
+    const position = mesh.geometry.attributes.position as THREE.BufferAttribute | undefined
+    const list: THREE.Vector3[] = []
+    if (position) {
+      const step = Math.max(1, Math.floor(position.count / 200))
+      const point = new THREE.Vector3()
+      mesh.updateWorldMatrix(true, false)
+      for (let i = 0; i < position.count; i += step) {
+        point.fromBufferAttribute(position, i).applyMatrix4(mesh.matrixWorld)
+        list.push(point.clone())
+      }
+    }
+    this.sampleCache.set(mesh, list)
+    return list
+  }
+
+  private updateGuideAnchors() {
+    const width = this.container.clientWidth || 1
+    const height = this.container.clientHeight || 1
+    const cameraPos = this.camera.position
+    const probe = new THREE.Vector3()
+    const screenX: number[] = []
+    const cloud: { mesh: THREE.Mesh; x: number; y: number; distance: number }[] = []
+
+    for (const entry of this.meshEntries) {
+      if (entry.layer !== 'muscles' || !entry.mesh.visible || !this.isMeshVisible(entry.mesh)) continue
+      for (const sample of this.samplesFor(entry.mesh)) {
+        probe.copy(sample).project(this.camera)
+        if (probe.z > 1) continue
+        cloud.push({
+          mesh: entry.mesh,
+          x: (probe.x * 0.5 + 0.5) * width,
+          y: (-probe.y * 0.5 + 0.5) * height,
+          distance: cameraPos.distanceTo(sample),
+        })
+        screenX.push((probe.x * 0.5 + 0.5) * width)
+      }
+    }
+
+    if (screenX.length > 12) {
+      screenX.sort((a, b) => a - b)
+      this.guideBounds = {
+        left: screenX[Math.floor(screenX.length * 0.02)],
+        right: screenX[Math.min(screenX.length - 1, Math.floor(screenX.length * 0.98))],
+      }
+    }
+
+    for (const item of this.guideItems) {
+      let best: THREE.Vector3 | null = null
+      let bestDistance = Infinity
+      for (const sample of this.samplesFor(item.mesh)) {
+        const distance = sample.distanceToSquared(cameraPos)
+        if (distance < bestDistance) {
+          bestDistance = distance
+          best = sample
+        }
+      }
+      if (!best) continue
+      item.anchor.copy(best)
+
+      probe.copy(best).project(this.camera)
+      const ax = (probe.x * 0.5 + 0.5) * width
+      const ay = (-probe.y * 0.5 + 0.5) * height
+      const anchorDistance = Math.sqrt(bestDistance)
+      let occluded = false
+      for (const point of cloud) {
+        if (point.mesh === item.mesh) continue
+        if (point.distance > anchorDistance - 0.015) continue
+        const dx = point.x - ax
+        const dy = point.y - ay
+        if (dx * dx + dy * dy < 49) {
+          occluded = true
+          break
+        }
+      }
+      item.occluded = occluded
+    }
+  }
+
+
+  private updateGuides(now: number) {
+    if (!this.guideEnabled || !this.guideItems.length) return
+
+    // 投影依赖相机矩阵；这里主动刷新，避免用到上一帧的矩阵
+    this.camera.updateMatrixWorld()
+    this.camera.matrixWorldInverse.copy(this.camera.matrixWorld).invert()
+
+    const moved = this.camera.position.distanceToSquared(this.lastGuideCameraPos) > 0.0004
+    const rotated = this.camera.quaternion.angleTo(this.lastGuideCameraQuat) > 0.015
+    if (this.guidesDirty || ((moved || rotated) && now - this.lastAnchorUpdate > 90)) {
+      this.updateGuideAnchors()
+      this.guidesDirty = false
+      this.lastAnchorUpdate = now
+      this.lastGuideCameraPos.copy(this.camera.position)
+      this.lastGuideCameraQuat.copy(this.camera.quaternion)
+    }
+
+    this.updateGuideLayout()
+  }
+
+  setGuideInsets(insets: Partial<{ left: number; right: number; top: number; bottom: number }>) {
+    this.guideInsets = { ...this.guideInsets, ...insets }
+  }
+
+  private updateGuideLayout() {
+    const width = this.container.clientWidth || 1
+    const height = this.container.clientHeight || 1
+    const edge = 12
+    let leftCol = 0
+    let rightCol = 0
+    const now = performance.now()
+    const remeasure = now - this.lastGuideMeasure > 500
+    if (remeasure) this.lastGuideMeasure = now
+    const { left: insetLeft, right: insetRight } = this.guideInsets
+    const top = this.guideInsets.top
+    const bottom = Math.max(top + 60, height - this.guideInsets.bottom)
+    const leftLimit = insetLeft + edge
+    const rightLimit = Math.max(leftLimit + 80, width - insetRight - edge)
+    const leftList: GuideItem[] = []
+    const rightList: GuideItem[] = []
+    const screenXs: number[] = []
+    const projected = new THREE.Vector3()
+
+    if (this.guideSvg.getAttribute('width') !== String(width)) {
+      this.guideSvg.setAttribute('width', String(width))
+      this.guideSvg.setAttribute('height', String(height))
+    }
+
+    for (const item of this.guideItems) {
+      if (remeasure || !item.width) item.width = item.el.offsetWidth
+      if (remeasure || !item.height) item.height = item.el.offsetHeight
+      projected.copy(item.anchor).project(this.camera)
+      const sx = (projected.x * 0.5 + 0.5) * width
+      const sy = (-projected.y * 0.5 + 0.5) * height
+      item.onScreen = projected.z < 1
+      item.x = sx
+      item.y = THREE.MathUtils.clamp(sy, top, bottom)
+      screenXs.push(sx)
+    }
+
+    // 以锚点的中位数作为分列界线，保证左右两列标签数量均衡
+    screenXs.sort((a, b) => a - b)
+    const axis = screenXs.length ? screenXs[Math.floor(screenXs.length / 2)] : width * 0.5
+
+    for (const item of this.guideItems) {
+      if (!item.onScreen) continue
+      item.side = item.x < axis ? -1 : 1
+      ;(item.side === -1 ? leftList : rightList).push(item)
+    }
+
+    const widest = (list: GuideItem[]) =>
+      list.reduce((max, item) => Math.max(max, item.width || 64), 0)
+
+    // 左列贴在模型左侧外缘；右列贴在模型右侧外缘，超出安全区时回收到面板内侧
+    const leftMin = leftLimit + widest(leftList)
+    const leftColTarget = this.guideBounds.left - 14 - widest(leftList)
+    leftCol = Math.min(Math.max(leftColTarget, leftMin), Math.max(leftMin, axis - 14))
+
+    const rightMax = Math.max(rightLimit - widest(rightList), axis + 14)
+    const rightLo = Math.min(axis + 14, rightMax)
+    const rightColTarget = this.guideBounds.right + 14
+    rightCol = Math.min(Math.max(rightColTarget, rightLo), rightMax)
+
+    this.stackGuides(leftList, top, bottom)
+    this.stackGuides(rightList, top, bottom)
+
+    for (const item of this.guideItems) {
+      const w = item.width || 64
+      const h = item.height || 20
+      const labelLeft = item.side === -1 ? leftCol - w : rightCol
+      const labelY = item.y
+      const attachX = item.side === -1 ? leftCol + 9 : rightCol - 9
+      const endX = item.side === -1 ? leftCol : rightCol
+
+      const d = `M${item.x.toFixed(1)} ${item.y.toFixed(1)}L${attachX.toFixed(1)} ${item.y.toFixed(1)}L${attachX.toFixed(1)} ${labelY.toFixed(1)}L${endX.toFixed(1)} ${labelY.toFixed(1)}`
+      if (d !== item.pathD) {
+        item.pathD = d
+        item.path.setAttribute('d', d)
+        item.dot.setAttribute('cx', item.x.toFixed(1))
+        item.dot.setAttribute('cy', item.y.toFixed(1))
+      }
+
+      const transform = `translate3d(${labelLeft.toFixed(1)}px, ${(labelY - h / 2).toFixed(1)}px, 0)`
+      if (item.el.style.transform !== transform) item.el.style.transform = transform
+
+      const hidden = !item.onScreen
+      const isFocused = item.mesh === this.focusedMesh
+      const opacity = hidden ? '0' : isFocused ? '1' : item.occluded ? '0.66' : '1'
+      if (item.el.style.opacity !== opacity) item.el.style.opacity = opacity
+      if (item.path.style.opacity !== opacity) item.path.style.opacity = opacity
+      if (item.dot.style.opacity !== opacity) item.dot.style.opacity = opacity
+      item.path.style.visibility = hidden ? 'hidden' : 'visible'
+      item.dot.style.visibility = hidden ? 'hidden' : 'visible'
+
+      if (item.occluded !== item.behind) {
+        item.behind = item.occluded
+        item.el.classList.toggle('behind', item.behind)
+        item.path.classList.toggle('behind', item.behind)
+        item.dot.classList.toggle('behind', item.behind)
+      }
+
+      const hot = item.mesh === this.hoveredMesh
+      if (hot !== item.hot) {
+        item.hot = hot
+        item.el.classList.toggle('hot', hot)
+        item.path.classList.toggle('hot', hot)
+        item.dot.classList.toggle('hot', hot)
+      }
+
+      const active = isFocused
+      if (active !== item.active) {
+        item.active = active
+        item.el.classList.toggle('active', active)
+        item.el.setAttribute('aria-pressed', String(active))
+        item.path.classList.toggle('active', active)
+        item.dot.classList.toggle('active', active)
+      }
+    }
+  }
+
+  private stackGuides(list: GuideItem[], top: number, bottom: number) {
+    if (!list.length) return
+    const half = (item: GuideItem) => (item.height || 20) / 2 + 3
+    list.sort((a, b) => a.y - b.y)
+    for (let i = 1; i < list.length; i += 1) {
+      const min = list[i - 1].y + half(list[i - 1]) + half(list[i])
+      if (list[i].y < min) list[i].y = min
+    }
+    const last = list[list.length - 1]
+    if (last.y + half(last) > bottom) {
+      last.y = bottom - half(last)
+      for (let i = list.length - 2; i >= 0; i -= 1) {
+        const max = list[i + 1].y - half(list[i + 1]) - half(list[i])
+        if (list[i].y > max) list[i].y = max
+      }
+    }
+    for (const item of list) {
+      const low = top + half(item)
+      item.y = THREE.MathUtils.clamp(item.y, low, Math.max(low, bottom - half(item)))
+    }
   }
 
   focus(view: ExerciseView) {
@@ -588,12 +994,14 @@ export class AnatomyScene {
         now,
         entry.mesh === this.hoveredMesh,
         !this.reducedMotion,
+        entry.mesh === this.focusedMesh,
       )
     }
     for (const gizmo of this.gizmos) gizmo.update(now, this.reducedMotion)
 
     this.updateCamera(now)
     this.controls.update()
+    this.updateGuides(now)
     this.renderer.render(this.scene, this.camera)
     this.labelRenderer.render(this.scene, this.camera)
   }
@@ -607,6 +1015,8 @@ export class AnatomyScene {
     this.controls.removeEventListener('start', this.cancelCameraAnimation)
     this.reduceMotionQuery.removeEventListener('change', this.handleMotionPreference)
     this.clearGizmos()
+    this.clearGuides()
+    this.guideLayer.remove()
     for (const entry of this.meshEntries) {
       entry.mesh.geometry.dispose()
       disposeMaterial(entry.state)

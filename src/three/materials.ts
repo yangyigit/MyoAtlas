@@ -35,6 +35,8 @@ const DIM: Record<LayerName, THREE.Color> = {
 
 const ACTIVE_BONE = new THREE.Color(PALETTE.boneActive)
 const ACTIVE_JOINT = new THREE.Color(PALETTE.jointActive)
+const FOCUS_TINT = new THREE.Color(0xffb199)
+const FOCUS_EMISSIVE = new THREE.Color(0xff5c3c)
 
 export interface AnatomyMaterial {
   material: THREE.MeshStandardMaterial
@@ -206,12 +208,29 @@ export function setDim(state: AnatomyMaterial, layer: LayerName, reveal: boolean
   state.breathing = false
 }
 
+/** 点击引导线后的聚焦高亮：提亮 + 强发光 */
+export function setFocused(state: AnatomyMaterial) {
+  state.targetColor.lerp(FOCUS_TINT, 0.24)
+  state.targetEmissive.copy(FOCUS_EMISSIVE)
+  state.targetEmissiveIntensity = 0.55
+  state.targetOpacity = 1
+  state.breathing = true
+}
+
+/** 聚焦某块肌肉时，其他肌肉稍作压暗，形成对比 */
+export function setMuted(state: AnatomyMaterial) {
+  state.targetColor.multiplyScalar(0.68)
+  state.targetEmissiveIntensity *= 0.35
+  state.breathing = false
+}
+
 export function updateAnatomyMaterial(
   state: AnatomyMaterial,
   dt: number,
   time: number,
   hovered: boolean,
   animateBreath = true,
+  focused = false,
 ) {
   const material = state.material
   const k = 1 - Math.exp(-dt * 9)
@@ -222,7 +241,12 @@ export function updateAnatomyMaterial(
     state.breathing && animateBreath
       ? 0.01 + 0.012 * Math.sin((time / 2400) * Math.PI * 2)
       : 0
-  const targetEmissive = state.targetEmissiveIntensity + breath + (hovered ? 0.1 : 0)
+  const pulse = focused
+    ? animateBreath
+      ? 0.18 * (0.5 + 0.5 * Math.sin((time / 640) * Math.PI * 2))
+      : 0.16
+    : 0
+  const targetEmissive = state.targetEmissiveIntensity + breath + pulse + (hovered ? 0.1 : 0)
   material.emissiveIntensity += (targetEmissive - material.emissiveIntensity) * k
 
   const opacity = material.opacity + (state.targetOpacity - material.opacity) * k
